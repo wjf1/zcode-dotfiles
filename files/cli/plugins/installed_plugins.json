@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "github@zcode-plugins-official",
+      "name": "github",
+      "marketplace": "zcode-plugins-official",
+      "version": "0.1.2",
+      "installPath": "__ZCODE_HOME__\\.zcode\\cli\\plugins\\cache\\zcode-plugins-official\\github\\0.1.2",
+      "installedAt": "2026-08-30T01:21:13.417Z",
+      "updatedAt": "2026-08-30T01:21:13.417Z",
+      "scope": "user",
+      "source": {
+        "source": "url",
+        "type": "zip",
+        "url": "https://cdn-zcode.z.ai/zcode/official-plugin/plugins/github/0.1.2/plugin.zip",
+        "sha256": "7320f15886d83625ed8eec944a7a2ab09fe99d64a42131ccec427eeecfd769b6",
+        "path": "github"
+      },
+      "cacheTransactionId": "e8480a45-11c0-488e-8253-956df6e2afc5"
+    },
+    {
+      "id": "mimosa@zcode-plugins-official",
+      "name": "mimosa",
+      "marketplace": "zcode-plugins-official",
+      "version": "1.0.3",
+      "installPath": "__ZCODE_HOME__\\.zcode\\cli\\plugins\\cache\\zcode-plugins-official\\mimosa\\1.0.3",
+      "installedAt": "2026-08-30T01:21:44.334Z",
+      "updatedAt": "2026-08-30T01:21:44.334Z",
+      "scope": "user",
+      "source": {
+        "source": "url",
+        "type": "zip",
+        "url": "https://cdn-zcode.z.ai/zcode/official-plugin/plugins/mimosa/1.0.3/plugin.zip",
+        "sha256": "63fa21a04a30511a8b9aa72d45cd4e964ed832bb677ca81d211efd337ee4684c",
+        "path": "mimosa"
+      },
+      "cacheTransactionId": "8c79e07d-744f-4e70-aaf4-48b737108957"
+    }
+  ]
+}

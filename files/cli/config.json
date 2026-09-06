@@ -1,0 +1,20 @@
+{
+  "plugins": {
+    "enabledPlugins": {
+      "github@zcode-plugins-official": true,
+      "mimosa@zcode-plugins-official": true
+    }
+  },
+  "mcp": {
+    "servers": {
+      "context7": {
+        "command": "cmd",
+        "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
+      },
+      "sequential-thinking": {
+        "command": "cmd",
+        "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+      }
+    }
+  }
+}
