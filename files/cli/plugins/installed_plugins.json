@@ -2,24 +2,6 @@
   "version": 1,
   "plugins": [
     {
-      "id": "github@zcode-plugins-official",
-      "name": "github",
-      "marketplace": "zcode-plugins-official",
-      "version": "0.1.2",
-      "installPath": "__ZCODE_HOME__\\.zcode\\cli\\plugins\\cache\\zcode-plugins-official\\github\\0.1.2",
-      "installedAt": "2026-08-30T01:21:13.417Z",
-      "updatedAt": "2026-08-30T01:21:13.417Z",
-      "scope": "user",
-      "source": {
-        "source": "url",
-        "type": "zip",
-        "url": "https://cdn-zcode.z.ai/zcode/official-plugin/plugins/github/0.1.2/plugin.zip",
-        "sha256": "7320f15886d83625ed8eec944a7a2ab09fe99d64a42131ccec427eeecfd769b6",
-        "path": "github"
-      },
-      "cacheTransactionId": "e8480a45-11c0-488e-8253-956df6e2afc5"
-    },
-    {
       "id": "mimosa@zcode-plugins-official",
       "name": "mimosa",
       "marketplace": "zcode-plugins-official",

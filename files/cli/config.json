@@ -2,18 +2,26 @@
   "plugins": {
     "enabledPlugins": {
       "github@zcode-plugins-official": true,
-      "mimosa@zcode-plugins-official": true
+      "mimosa@zcode-plugins-official": false
     }
   },
   "mcp": {
     "servers": {
       "context7": {
-        "command": "cmd",
-        "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
+        "command": "E:\\OpenCode\\context7-mcp.cmd",
+        "args": [],
+        "timeoutMs": 60000
       },
       "sequential-thinking": {
-        "command": "cmd",
-        "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+        "command": "E:\\OpenCode\\mcp-server-sequential-thinking.cmd",
+        "args": [],
+        "timeoutMs": 60000
+      },
+      "zcode-token-usage-statusbar": {
+        "command": "__ZCODE_HOME__\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "args": [
+          "__ZCODE_HOME__\\.zcode\\zcode-token-usage-statusbar\\usage_mcp.py"
+        ]
       }
     }
   }
