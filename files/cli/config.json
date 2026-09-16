@@ -1,24 +1,31 @@
 {
   "plugins": {
     "enabledPlugins": {
-      "github@zcode-plugins-official": true,
-      "mimosa@zcode-plugins-official": false
-    }
+      "mimosa@zcode-plugins-official": false,
+      "github@zcode-plugins-official": false
+    },
+    "options": {}
   },
   "mcp": {
     "servers": {
       "context7": {
-        "command": "E:\\OpenCode\\context7-mcp.cmd",
-        "args": [],
+        "command": "cmd",
+        "args": [
+          "/c",
+          "context7-mcp"
+        ],
         "timeoutMs": 60000
       },
       "sequential-thinking": {
-        "command": "E:\\OpenCode\\mcp-server-sequential-thinking.cmd",
-        "args": [],
+        "command": "cmd",
+        "args": [
+          "/c",
+          "mcp-server-sequential-thinking"
+        ],
         "timeoutMs": 60000
       },
       "zcode-token-usage-statusbar": {
-        "command": "__ZCODE_HOME__\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "command": "__ZCODE_HOME__\\AppData\\Local\\Doubao\\User Data\\sandbox_runtime\\bases\\c98c5042338ed152c6f10ecd8591889f\\python\\python.exe",
         "args": [
           "__ZCODE_HOME__\\.zcode\\zcode-token-usage-statusbar\\usage_mcp.py"
         ]

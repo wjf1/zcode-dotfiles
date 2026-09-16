@@ -9,9 +9,9 @@
       },
       "name": "zcode-plugins-official",
       "description": "Official ZCode plugins marketplace: built-in and community plugins for ZCode.",
-      "addedAt": "2026-08-28T16:24:49.522Z",
+      "addedAt": "2026-09-02T03:41:13.923Z",
       "pluginCount": 24,
-      "lastUpdated": "2026-09-02T17:31:57.401Z"
+      "lastUpdated": "2026-09-02T03:41:15.960Z"
     },
     {
       "id": "claude-plugins-official",
@@ -21,10 +21,10 @@
       },
       "name": "claude-plugins-official",
       "description": "Directory of popular Claude Code extensions including development tools, productivity plugins, and MCP integrations",
-      "addedAt": "2026-08-28T16:24:49.522Z",
+      "addedAt": "2026-09-02T03:41:13.923Z",
       "pluginCount": 291,
-      "lastUpdated": "2026-09-02T17:32:00.055Z",
-      "cacheTransactionId": "9214f3ca-e574-410b-8649-c8508080e94a"
+      "lastUpdated": "2026-09-02T03:41:23.966Z",
+      "cacheTransactionId": "a70c7d40-921d-4ff4-8707-2344945fec3d"
     }
   ]
 }
