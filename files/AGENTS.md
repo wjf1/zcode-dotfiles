@@ -29,9 +29,10 @@
 - 读密集任务尽早派发：让原始文件内容留在子代理上下文、主会话只收回结论，避免撑爆主上下文后再靠压缩兜底。
 - 派发时 prompt 必须自包含（子代理看不到主会话历史），返回结果的关键内容需向用户转述。
 
-## 技能安装优先源（SkillHub）
-- 技能搜索、安装、升级优先使用 `skillhub` CLI（`~/.local/bin/skillhub`，国内源更快更合规）；skillhub 不可用或无匹配结果时回退 `clawhub`，并向用户说明回退原因。
-- 安装技能必须带 `--dir` 指向目标 Agent 的 skills 目录（ZCode 工作区技能目录或用户指定目录），否则默认装到 `./skills/` 不被识别。
+## 技能安装规范（`npx skills`，Agent Skills 标准）
+- 统一用 `npx skills` 安装：`npx skills add <owner/repo> -s <skill名> -a zcode -g -y`。agent 标识固定为 `zcode`（对应用户级 `~/.zcode/skills/`），不要装到其它目录；`skillhub` / `clawhub` 本机不存在，不再使用。
+- `-s` 一次只装一个 skill，需要多个时逐个执行；先用 `-l` 列出仓库内 skill 名再精选，不整包盲装。
+- 安装前检查重名：对照 `~/.zcode/skills/`、`~/.agents/skills/` 与官方插件自带技能（document-skills 的 docx/pdf/pptx/xlsx、skill-creator 等）——用户技能会遮蔽同名插件技能，同名即降级，必须跳过。
 - 安装前先汇总技能的来源、版本、风险，交用户确认后再装。
 
 ## 代码变更发布流程（所有本地代码变更默认生效）

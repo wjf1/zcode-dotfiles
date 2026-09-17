@@ -2,7 +2,7 @@
   "plugins": {
     "enabledPlugins": {
       "mimosa@zcode-plugins-official": false,
-      "github@zcode-plugins-official": false
+      "github@zcode-plugins-official": true
     },
     "options": {}
   },
@@ -29,6 +29,19 @@
         "args": [
           "__ZCODE_HOME__\\.zcode\\zcode-token-usage-statusbar\\usage_mcp.py"
         ]
+      },
+      "codebase-memory-mcp": {
+        "command": "__ZCODE_HOME__\\AppData\\Local\\Programs\\codebase-memory-mcp\\codebase-memory-mcp.exe",
+        "args": [],
+        "timeoutMs": 120000
+      },
+      "chrome-devtools": {
+        "command": "cmd",
+        "args": [
+          "/c",
+          "chrome-devtools-mcp"
+        ],
+        "timeoutMs": 120000
       }
     }
   }
