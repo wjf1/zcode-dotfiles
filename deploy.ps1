@@ -36,6 +36,19 @@ Restore-File "cli\plugins\installed_plugins.json"
 Restore-File "cli\plugins\known_marketplaces.json"
 Restore-File "commands\usage.md"
 
+# 1b. skills 整目录还原（先清空目标再复制，避免残留旧版 skill）
+$tplSkills = Join-Path $files "skills"
+$dstSkills = Join-Path $zcode "skills"
+if (Test-Path $tplSkills) {
+  if (Test-Path $dstSkills) { Remove-Item $dstSkills -Recurse -Force }
+  New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
+  Copy-Item (Join-Path $tplSkills "*") $dstSkills -Recurse -Force
+  $n = (Get-ChildItem $dstSkills -Directory).Count
+  Write-Host "已恢复: skills\ ($n 个)"
+} else {
+  Write-Warning "模板缺失，跳过: skills\"
+}
+
 # 2. config.json 做合并（不覆盖目标机器上已有其它设置）
 $tplCfg = Join-Path $files "cli\config.json"
 $dstCfg = Join-Path $zcode "cli\config.json"
