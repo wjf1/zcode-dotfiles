@@ -51,6 +51,8 @@ export 会把 `skills/` 整目录镜像到仓库（含删除本地已删 skill �
 
 路径在本仓库中以 `__ZCODE_HOME__` 占位符存储（skills 目录内无绝对路径，直接复制），部署时自动替换为本机用户目录，跨用户名机器可用。
 
+**占位符覆盖不到的部分**：`cli/config.json` 里除 `__ZCODE_HOME__` 之外的 MCP 依赖路径是本机专属，部署时不会被改写 —— 如 `E:\OpenCode\*.cmd`（context7 / sequential-thinking / chrome-devtools）与 `AppData\Local\Programs\codebase-memory-mcp\*.exe`。新机器需先装好这些工具，或手动改 `config.json` 里的路径。另注意 `zcode-token-usage-statusbar` 用到的 `usage_mcp.py` 位于 `~/.zcode/zcode-token-usage-statusbar/`，**不在同步范围内**，新机器上该 MCP 会启动失败，需单独补上该脚本。
+
 **刻意不同步**：会话数据、日志、插件缓存（自动重下）、登录凭证、API 密钥。
 
 ---
@@ -103,5 +105,7 @@ Export mirrors the whole `skills/` directory into the repo (including removal of
 | Custom slash commands | `~/.zcode/commands/` |
 
 Paths are stored with a `__ZCODE_HOME__` placeholder (skills contain no absolute paths, copied verbatim) and replaced with the local home directory on deploy, so it works across machines with different usernames.
+
+**What the placeholder doesn't cover**: MCP dependency paths in `cli/config.json` other than `__ZCODE_HOME__` are machine-specific and are not rewritten on deploy — e.g. `E:\OpenCode\*.cmd` (context7 / sequential-thinking / chrome-devtools) and `AppData\Local\Programs\codebase-memory-mcp\*.exe`. Install those tools on the new machine first, or edit the paths in `config.json` by hand. Also note that the `zcode-token-usage-statusbar` server's `usage_mcp.py` lives in `~/.zcode/zcode-token-usage-statusbar/`, which is **not in sync scope** — that MCP will fail to start on a fresh machine until you supply the script.
 
 **Intentionally not synced**: session data, logs, plugin caches (re-downloaded automatically), login credentials, API keys.
