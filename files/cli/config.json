@@ -2,7 +2,9 @@
   "plugins": {
     "enabledPlugins": {
       "mimosa@zcode-plugins-official": false,
-      "github@zcode-plugins-official": true
+      "github@zcode-plugins-official": true,
+      "android-emulator@zcode-plugins-official": true,
+      "computer-use@zcode-plugins-official": true
     },
     "options": {}
   },
