@@ -1,0 +1,10 @@
+# 换行统一：只在"换行会真的搞坏东西"的地方强制，避免动到 verbatim 同步的技能文件。
+#
+# 背景：本机 core.autocrlf=true 会让 Windows 检出把 shell 脚本变成 CRLF，
+# 而 `#!/bin/sh\r` 会直接导致 "bad interpreter"。因此 .sh 强制 LF 入库与检出。
+# 技能文件（*.md/*.json 等）不在此列，保持原样以守住"逐字节一致"的承诺。
+
+*.sh  text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf

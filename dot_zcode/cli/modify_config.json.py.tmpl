@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+# chezmoi modify_ 脚本：stdin = 目标 ~/.zcode/cli/config.json 的当前内容（不存在时为空），
+# stdout = 合并后的新内容。
+#
+# 为什么文件名是 modify_config.json.py.tmpl：
+#   chezmoi 依次剥掉 .tmpl 与"已注册的脚本扩展名"来推导目标名，.py 是内置脚本扩展名，
+#   因此 目标名 = config.json；而 .json 不是脚本扩展名，剥不掉就还原不出正确的目标名。
+#   Windows 上 chezmoi 按扩展名选解释器，故 .chezmoi.toml 里显式配置 [interpreters.py]。
+#
+# 合并规则（幂等、全程非交互）：
+#   1. 模板未声明的顶层键一律保留；
+#   2. mcp.servers 中模板声明的条目整体覆盖同名条目（模板为准），目标机独有的条目原样保留；
+#   3. plugins.enabledPlugins 按键合并，模板声明的开关胜出，其余键保留。
+import json
+import os
+import sys
+import time
+
+DESIRED = {
+    "plugins": {
+        "enabledPlugins": {
+            "github@zcode-plugins-official": True,
+            "mimosa@zcode-plugins-official": False,
+            "android-emulator@zcode-plugins-official": True,
+            "computer-use@zcode-plugins-official": True,
+        }
+    },
+    "mcp": {
+        "servers": {
+{{- $npx := "npx" }}
+{{- if eq .chezmoi.os "windows" }}{{ $npx = "npx.cmd" }}{{ end }}
+            # 版本在 2026-10-06 按主力机 E:\OpenCode\node_modules 实测锁定，
+            # 避免 npx -y 静默浮动到最新版（chrome-devtools 等 MCP 行为会随之变化）。
+            "context7": {
+                "command": {{ $npx | printf "%q" }},
+                "args": ["-y", "@upstash/context7-mcp@4.1.0"],
+                "timeoutMs": 60000,
+            },
+            "sequential-thinking": {
+                "command": {{ $npx | printf "%q" }},
+                "args": ["-y", "@modelcontextprotocol/server-sequential-thinking@2026.8.31"],
+                "timeoutMs": 60000,
+            },
+            "chrome-devtools": {
+                "command": {{ $npx | printf "%q" }},
+                "args": ["-y", "chrome-devtools-mcp@1.9.0"],
+                "timeoutMs": 120000,
+            },
+            "zcode-token-usage-statusbar": {
+                "command": {{ .zcodePythonPath | printf "%q" }},
+                "args": [{{ joinPath .chezmoi.homeDir ".zcode" "zcode-token-usage-statusbar" "usage_mcp.py" | printf "%q" }}],
+                "timeoutMs": 60000,
+            },
+{{- if and (eq .chezmoi.os "windows") .zcodeCodebaseMemoryPath }}
+            "codebase-memory-mcp": {
+                "command": {{ .zcodeCodebaseMemoryPath | printf "%q" }},
+                "args": [],
+                "timeoutMs": 120000,
+            },
+{{- end }}
+        }
+    },
+}
+
+BACKUP_SUFFIX = ".broken-backup"
+
+
+def merge(dst, des):
+    out = dict(dst)
+    # 顶层：模板声明的键胜出，目标独有的键保留
+    for key, value in des.items():
+        if key in ("mcp", "plugins"):
+            continue
+        out[key] = value
+
+    plugins = dict(out.get("plugins") or {})
+    enabled = dict(plugins.get("enabledPlugins") or {})
+    enabled.update((des.get("plugins") or {}).get("enabledPlugins") or {})
+    plugins["enabledPlugins"] = enabled
+    out["plugins"] = plugins
+
+    mcp = dict(out.get("mcp") or {})
+    servers = dict(mcp.get("servers") or {})
+    for name, cfg in (des.get("mcp") or {}).get("servers", {}).items():
+        servers[name] = cfg
+    mcp["servers"] = servers
+    out["mcp"] = mcp
+    return out
+
+
+def main():
+    raw = sys.stdin.read()
+    dst = {}
+    if raw.strip():
+        try:
+            dst = json.loads(raw)
+            if not isinstance(dst, dict):
+                raise ValueError("顶层不是 JSON 对象")
+        except Exception as exc:
+            # 目标内容损坏：先就地留档再按空对象合并，避免静默丢弃用户配置
+            path = os.path.join(os.path.expanduser("~"), ".zcode", "cli",
+                                "config.json" + BACKUP_SUFFIX)
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write(raw)
+                note = "已留档到 " + path
+            except Exception:
+                note = "留档失败"
+            print("[modify_config] WARN: 目标 config.json 不可解析（%s），%s，本次按空对象合并"
+                  % (exc, note), file=sys.stderr)
+            dst = {}
+    sys.stdout.write(json.dumps(merge(dst, DESIRED), indent=2, ensure_ascii=False) + "\n")
+
+
+main()

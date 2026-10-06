@@ -1,0 +1,49 @@
+# ZCode MCP 依赖清单（L3 层唯一事实源）
+#
+# 本文件是 CI 漂移检查的对照基准：dot_zcode/cli/modify_config.json.py.tmpl 里声明的
+# MCP server 与 run_once_after_10-install-mcp-deps.* 的检测项必须与本清单一致。
+#
+# level 语义：
+#   green  = 无外部依赖，仓库自带或系统自带即可
+#   yellow = 需要外部运行时（Node.js/npx 或 Python 3），部署后可能需人工补装
+#   red    = 平台受限依赖，非支持平台不渲染、不检测
+version: 1
+
+servers:
+  - name: context7
+    level: yellow
+    command_windows: npx.cmd
+    command_unix: npx
+    args: ["-y", "@upstash/context7-mcp@4.1.0"]
+    requires: [node]
+    note: 版本已锁定；升级需同步本文件、模板与 README。
+
+  - name: sequential-thinking
+    level: yellow
+    command_windows: npx.cmd
+    command_unix: npx
+    args: ["-y", "@modelcontextprotocol/server-sequential-thinking@2026.8.31"]
+    requires: [node]
+    note: 版本已锁定；该包使用日期式版本号，属正常。
+
+  - name: chrome-devtools
+    level: yellow
+    command_windows: npx.cmd
+    command_unix: npx
+    args: ["-y", "chrome-devtools-mcp@1.9.0"]
+    requires: [node]
+    note: 需要可用的 Chrome/Chromium；版本已锁定。
+
+  - name: zcode-token-usage-statusbar
+    level: green
+    command: 由 chezmoi 采集的 zcodePythonPath
+    args: ["<homeDir>/.zcode/zcode-token-usage-statusbar/usage_mcp.py"]
+    requires: [python3, statusbar-repo]
+    note: 脚本本体不随本仓库同步，需按 README 克隆 wjf1/zcode-token-usage-statusbar。
+
+  - name: codebase-memory-mcp
+    level: red
+    platforms: [windows]
+    command: 由 chezmoi 采集的 zcodeCodebaseMemoryPath
+    args: []
+    note: 仅 Windows 且路径非空时渲染；非 Windows 平台不渲染、不检测，替代方案见 README。

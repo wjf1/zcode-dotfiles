@@ -1,0 +1,21 @@
+{{- /* ZCode dotfiles 的 chezmoi 配置模板：首次 init 交互采集，promptStringOnce 每台机器只问一次 */ -}}
+{{- $defaultPython := "/usr/bin/python3" -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{-   $defaultPython = joinPath .chezmoi.homeDir "AppData" "Local" "Programs" "Python" "Python312" "python.exe" -}}
+{{- end -}}
+{{- $python := promptStringOnce . "zcodePythonPath" "Python 3 解释器绝对路径（token 用量状态栏 MCP 与 config.json 合并脚本用；直接回车采用默认值）" $defaultPython -}}
+{{- $defaultMemory := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{-   $defaultMemory = joinPath .chezmoi.homeDir "AppData" "Local" "Programs" "codebase-memory-mcp" "codebase-memory-mcp.exe" -}}
+{{- end -}}
+{{- $memory := promptStringOnce . "zcodeCodebaseMemoryPath" "codebase-memory-mcp.exe 绝对路径（仅 Windows；未安装直接回车留空即不渲染该 MCP）" $defaultMemory -}}
+
+[data]
+    zcodePythonPath = {{ $python | quote }}
+    zcodeCodebaseMemoryPath = {{ $memory | quote }}
+
+# Windows 上 chezmoi 按文件扩展名选择脚本解释器，且不读 shebang；
+# dot_zcode/cli/modify_config.json.py.tmpl 的目标名依赖 .py 被识别为脚本扩展名，
+# 因此这里显式把 .py 指向上面采集到的解释器（macOS/Linux 走 shebang，此配置无害）。
+[interpreters.py]
+    command = {{ $python | quote }}

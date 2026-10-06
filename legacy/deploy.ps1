@@ -1,4 +1,4 @@
-﻿# ZCode 配置一键部署：克隆本仓库后运行本脚本即可恢复全部配置
+﻿# ZCode 配置一键部署（历史归档实现，详见 legacy/README.md，迁移完成后不可执行）
 # 用法: powershell -ExecutionPolicy Bypass -File deploy.ps1
 $ErrorActionPreference = "Stop"
 $repo    = $PSScriptRoot
@@ -6,6 +6,8 @@ $zcode   = Join-Path $env:USERPROFILE ".zcode"
 $files   = Join-Path $repo "files"
 $ph      = "__ZCODE_HOME__"
 $home_   = $env:USERPROFILE
+# R0 修复：JSON 里的路径必须用转义形式。脚本级统一定义，避免各处重复计算漏转义。
+$escHome = $home_.Replace('\', '\\')
 
 if (-not (Test-Path $files)) { Write-Error "找不到 files/ 目录，请在仓库根目录运行"; exit 1 }
 
@@ -24,7 +26,6 @@ function Restore-File([string]$rel) {
   $dst = Join-Path $zcode $rel
   New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
   $text = [System.IO.File]::ReadAllText($tpl)
-  $escHome = $home_.Replace('\', '\\')  # JSON 转义形式的本机路径
   $text = $text.Replace($ph, $escHome)
   [System.IO.File]::WriteAllText($dst, $text, (New-Object System.Text.UTF8Encoding($false)))
   Write-Host "已恢复: $rel"
@@ -54,7 +55,7 @@ $tplCfg = Join-Path $files "cli\config.json"
 $dstCfg = Join-Path $zcode "cli\config.json"
 if (Test-Path $dstCfg) {
   $cur = Get-Content $dstCfg -Raw | ConvertFrom-Json
-  $tplText = (Get-Content $tplCfg -Raw).Replace($ph, $home_)
+  $tplText = (Get-Content $tplCfg -Raw).Replace($ph, $escHome)
   $tpl = $tplText | ConvertFrom-Json
   foreach ($p in $tpl.PSObject.Properties) {
     $cur | Add-Member -MemberType NoteProperty -Name $p.Name -Value $p.Value -Force
