@@ -45,6 +45,9 @@ winpath_backslash() {
 
 command -v chezmoi >/dev/null 2>&1 || fail "未找到 chezmoi（先安装：sh -c \"\$(curl -fsLS https://get.chezmoi.io)\"）"
 
+# 内联 Python 会打印中文；Windows runner 的 stdout 默认是 cp1252，必须强制 UTF-8
+export PYTHONIOENCODING=utf-8
+
 PY=""
 for cand in python3 python; do
   if command -v "$cand" >/dev/null 2>&1 && "$cand" -c 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then
@@ -222,8 +225,8 @@ fi
 n_dirs=$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
 n_files=$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')
 echo "   障碍存在时：目录 $n_dirs / 文件 $n_files"
-[ "$n_dirs" = "38" ] || fail "失败后 skills 目录树被破坏（目录数 $n_dirs）"
-[ "$n_files" = "68" ] || fail "失败后 skills 被清空或半套（文件数 $n_files）"
+[ "$n_dirs" = "38" ] || fail "失败后 skills 目录树被破坏（目录数 ${n_dirs}）"
+[ "$n_files" = "68" ] || fail "失败后 skills 被清空或半套（文件数 ${n_files}）"
 chmod 644 "$OBSTACLE" 2>/dev/null || true
 c apply --exclude=scripts
 [ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "68" ] || fail "障碍清除后未恢复 68 个技能文件"
@@ -359,9 +362,17 @@ cat > "$FAKEHOME/.zcode/cli/config.json" <<'EOF'
   }
 }
 EOF
+
+# 断言一律用 ASCII 标记：Windows PowerShell 5.1 的输出走系统代码页，中文匹配不可靠。
+# 先绕过 OS 守卫跑 .sh 主体——本机（Windows）默认会早退，若不绕过这段逻辑永远测不到
+# （这正是首轮 CI 里 macOS 才暴露出的那类缺口）。
+out_body=$(HOME="$FAKEHOME" ZCODE_SKIP_OS_GUARD=1 sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
+echo "$out_body" | grep -q 'mcp-check' || fail ".sh 主体渲染自检未输出：$out_body"
+echo "$out_body" | grep -qi 'definitely-not-a-real-command-xyz' || fail ".sh 主体未检出缺失命令"
+ok ".sh 主体渲染自检能检出缺失命令（已绕过 OS 守卫）"
+
 if [ "$IS_WINDOWS" = 1 ]; then
-  # Windows：.sh 应自身早退，.ps1 应真正执行自检
-  # 断言一律用 ASCII 标记：Windows PowerShell 5.1 的输出走系统代码页，中文匹配不可靠
+  # Windows：不绕守卫时 .sh 应自身早退；.ps1 应真正执行自检
   out_sh=$(HOME="$FAKEHOME" sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
   echo "$out_sh" | grep -q 'skipped-by-unix-script' || fail ".sh 在 Windows 未按预期早退：$out_sh"
   ok ".sh 在 Windows 正确早退"
@@ -394,6 +405,32 @@ else
   echo "$out" | grep -q 'platform=windows' && fail "类 Unix 上错误执行了 run_once .ps1（.chezmoiignore 未生效）"
 fi
 ok "run_once 只在本平台执行（.chezmoiignore 生效）"
+
+# ---------- shell 可移植性静态闸门 ----------
+step "shell 可移植性：\$VAR 不得紧跟非 ASCII 字符（macOS bash 3.2 会把它吞进变量名）"
+py - "$ROOT" <<'PY'
+import os, re, sys
+root = sys.argv[1]
+pat = re.compile(rb'\$[A-Za-z_][A-Za-z0-9_]*(?=[^\x00-\x7F])')
+bad = []
+for dirpath, dirnames, filenames in os.walk(root):
+    dirnames[:] = [d for d in dirnames if d not in ('.git', '.test-home')]
+    for fn in filenames:
+        if not fn.endswith('.sh'):
+            continue
+        path = os.path.join(dirpath, fn)
+        data = open(path, 'rb').read()
+        for m in pat.finditer(data):
+            line = data[:m.start()].count(b'\n') + 1
+            bad.append('%s:%d %s' % (os.path.relpath(path, root).replace('\\', '/'), line, m.group().decode()))
+if bad:
+    print("以下位置需要改成 ${VAR} 形式：")
+    for b in bad:
+        print("  " + b)
+    sys.exit(1)
+print("全部 .sh 通过：无 $VAR 紧邻非 ASCII 字符")
+PY
+ok "shell 变量名可移植性检查通过"
 
 # ---------- 收尾 ----------
 step "清理"

@@ -42,8 +42,11 @@ jobs:
       - name: 安装 gitleaks
         run: |
           if ! command -v gitleaks >/dev/null 2>&1; then
-            curl -fsSL -o /tmp/gitleaks.tar.gz \
-              https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_amd64.tar.gz
+            # 资源名随版本变化（8.x 用 linux_x64），故从 release API 动态解析，避免写死失效
+            url=$(curl -fsSL https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
+                  | grep -o 'https://[^"]*linux_x64\.tar\.gz' | head -1)
+            echo "gitleaks asset: $url"
+            curl -fsSL -o /tmp/gitleaks.tar.gz "$url"
             tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
             sudo install /tmp/gitleaks /usr/local/bin/gitleaks
           fi
@@ -51,5 +54,11 @@ jobs:
 
       - name: 扫描工作区与全量历史
         run: |
-          gitleaks detect --source . --no-git --redact --verbose
-          gitleaks detect --source . --redact --verbose
+          # 8.19+ 推荐 dir/git 子命令，更老版本用 detect；按实际可用子命令选择，不掩盖失败
+          if gitleaks help dir >/dev/null 2>&1; then
+            gitleaks dir --redact --verbose .
+            gitleaks git --redact --verbose .
+          else
+            gitleaks detect --source . --no-git --redact --verbose
+            gitleaks detect --source . --redact --verbose
+          fi

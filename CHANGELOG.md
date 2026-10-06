@@ -2,6 +2,23 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.0.1 — 2026-10-06
+
+v2.0.0 推送后，CI 的三平台矩阵在 **macOS** 与 **Windows** 上暴露了三个真实缺陷，本版修复。Linux 平台自 v2.0.0 起即通过。
+
+### 修复
+
+- **macOS 上 run_once 脚本会崩溃（产品缺陷）**：`run_once_after_10-install-mcp-deps.sh` 中 `$STATUSBAR（`、`$CFG，` 这类"变量名紧跟中日韩字符"的写法，在 macOS 自带的 bash 3.2 下会把多字节字符吞进变量名，配合 `set -u` 直接报 `unbound variable` 并使脚本失败。已改为 `${VAR}` 花括号形式。
+- **Windows 上验收脚本崩溃（测试缺陷）**：内联 Python 打印中文时，Windows runner 的 stdout 默认为 cp1252，抛 `UnicodeEncodeError`。已在验收脚本中强制 `PYTHONIOENCODING=utf-8`。
+- **CI 安装 gitleaks 失败（CI 缺陷）**：资源名从 `gitleaks_<ver>_linux_amd64.tar.gz` 改成了 `linux_x64`，写死的下载地址 404。已改为从 release API 动态解析资源地址，并按可用子命令在 `dir`/`git`（8.19+）与 `detect`（旧版）之间自动选择。
+
+### 变更
+
+- **验收新增两道闸门，堵住上述两类缺口**：
+  - **shell 可移植性静态检查**：扫描全部 `.sh`，禁止 `$VAR` 直接紧跟非 ASCII 字符（用 Python 实现，避免依赖 BSD grep 缺失的 `-P`）。
+  - **`run_once` 主体覆盖**：新增 `ZCODE_SKIP_OS_GUARD=1` 测试开关，使 Windows 上也能实际执行 `.sh` 的主体逻辑——v2.0.0 的验收只在 macOS 上才第一次跑到这段代码，本版起不再有该盲区。
+- `run_once` 脚本的 Windows/MSYS 早退分支改用 ASCII 标记 `platform=windows skipped-by-unix-script`，便于断言。
+
 ## v2.0.0 — 2026-10-06
 
 chezmoi 化迁移：从"Windows 专用 PowerShell 脚本"改为三平台单命令部署的 chezmoi source state。

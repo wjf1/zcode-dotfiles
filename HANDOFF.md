@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`v2.0.0`（2026-10-06，chezmoi 化迁移首发）
+- **当前版本**：`v2.0.1`（2026-10-06）——`v2.0.0` 为 chezmoi 化迁移首发，`v2.0.1` 修复 CI 三平台矩阵暴露的可移植性缺陷（见 CHANGELOG）
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、38 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -51,6 +51,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 - 修复旧体系全部已确认缺陷：R0（归档件 P0 路径注入，静态+沙箱动态复验）、R1（静默清 MCP）、R2（逐字节一致）、R3（技能树原子性）、R4（幂等、无备份堆叠）、R5（占位符渲染）。
 - 新增 CI 三平台矩阵与 gitleaks 扫描；新增 5 份文档（README 双语、CHANGELOG、HANDOFF、PROBES、VERIFY）。
 - 相对迁移规格 v2.0 的**偏差 3 处**（详见 PROBES.md）：合并改用 `.py` 形态的 `modify_` 脚本（需 Python 3）；`usage_mcp.py` 改为克隆上游而非 vendor；MCP 保留 `npx` 但**锁定版本**。
+- `v2.0.1`：修复 macOS 上 `.sh` 的 `$VAR` 紧跟中日韩字符导致 `unbound variable`、Windows 上内联 Python 中文编码崩溃、CI gitleaks 下载地址 404；并新增两道闸门（`.sh` 变量名可移植性静态扫描、`ZCODE_SKIP_OS_GUARD=1` 让 Windows 也能跑到 `.sh` 主体）。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 

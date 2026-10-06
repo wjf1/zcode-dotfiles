@@ -40,7 +40,7 @@ for d in "$SKILLS_DIR"/*/; do
       rmdir "$PLAIN" 2>/dev/null || true
       echo "  added -> dot_zcode/exact_skills/$name"
     else
-      echo "  WARN: 未在 source 中找到 $name，请手动核对" >&2
+      echo "  WARN: 未在 source 中找到 ${name}，请手动核对" >&2
     fi
   fi
 done
