@@ -11,6 +11,21 @@
 ACCEPTANCE PASS      # 退出码 0
 ```
 
+## CI 三平台矩阵结果（v2.0.1，run 37487600824）
+
+| Job | 结果 | 证据 |
+|---|---|---|
+| acceptance (ubuntu-latest) | ✓ | `[mcp-deps] platform=unix` → `ACCEPTANCE PASS` |
+| acceptance (macos-latest) | ✓ | `[mcp-deps] platform=unix` → `ACCEPTANCE PASS` |
+| acceptance (windows-latest) | ✓ | `[mcp-deps] platform=windows` → `ACCEPTANCE PASS` |
+| secret scan (gitleaks) | ✓ | 工作区与全量历史均无命中 |
+
+CI 同时验证了 `run_once` 的跨平台调度：Windows 只执行 `.ps1`，macOS/Linux 只执行 `.sh`。
+
+> 首轮 CI（v2.0.0，run 37486623308）在 macOS 与 Windows 上失败并暴露了三个真实缺陷
+> （macOS bash 3.2 的 `$VAR` 多字节吞噬、Windows cp1252 编码、gitleaks 资源名变更），
+> 已在 v2.0.1 修复——这正是引入三平台矩阵的价值。
+
 ## 逐步结果（acceptance 实际输出，非手工整理）
 
 | 步骤 | 覆盖 | 结果 |
@@ -75,10 +90,10 @@ OK  run_once 只在本平台执行（.chezmoiignore 生效）
 
 ## 未覆盖 / 待人工验证（诚实声明）
 
-1. **macOS / Linux 真机**：本机只有 Windows，三平台矩阵由 `.github/workflows/acceptance.yml` 在 CI 上覆盖，本地未实测。相关风险点：`/usr/bin/python3` 是否存在、`exact_` 与权限语义、`chmod` 障碍在 Unix 上可能被 rename 语义绕过（R3 已做双分支断言）。
-2. **`npx -y <pkg>@<ver>` 在非 Windows 的实际启动**（D3）：仅核对了版本与包名，未在 Unix 上实跑。
+1. **真实机器上的首次部署**：CI 与本地验收都在沙箱目标目录（`--destination`）里跑，**这不等于**存量机可以直接 apply。macOS / Linux 的真实安装路径、`/usr/bin/python3` 存在性、`exact_` 的权限语义仍需在真机上跑一次单命令部署确认；Windows 侧切换前必须先按 README 走 adopt 流程。
+2. **`npx -y <pkg>@<ver>` 在非 Windows 的实际启动**（D3）：仅核对了版本与包名，CI 只检测依赖存在性，未实跑启动这些 MCP。
 3. **ZCode 是否信任 `installed_plugins.json` 的 `installPath`**：文件已正确渲染为本机真实路径，但 ZCode 读取行为需在真机观察（见 HANDOFF.md 待办）。
-4. **主力机的实际切换**：沙箱验收通过 ≠ 存量机可直接 apply。切换前必须按 README 的 adopt 流程先纳管本机未跟踪技能（本机现有 39 个技能目录，仓库侧 38 个）。
+4. **存量机保护**：本机现有 39 个技能目录，仓库侧 38 个（多出 `agent-reach`），未纳管技能会在首次 apply 时被 `exact_` 删除。
 
 ## 复现方法
 
