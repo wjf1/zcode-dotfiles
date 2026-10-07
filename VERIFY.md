@@ -1,6 +1,6 @@
 # VERIFY.md —— 验收记录
 
-- 验收日期：2026-10-06
+- 验收日期：2026-10-07（v2.1.0 验收）
 - 执行人：ZCode（本机会话，自动化）
 - 环境：Windows 10.0.26200（`MINGW64_NT-10.0-26200`）、chezmoi v2.73.0、Python 3.12.10（经 `python` 调用）、Node.js 22.23.2、PowerShell 5.1
 - 命令：`sh tests/acceptance.sh`（仓库根，全部在 `.test-home/` 沙箱内执行）
@@ -8,7 +8,7 @@
 ## 结论
 
 ```
-ACCEPTANCE PASS      # 退出码 0
+ACCEPTANCE PASS      # 退出码 0（40 技能 / 191 文件，全部用例通过）
 ```
 
 ## CI 三平台矩阵结果（v2.0.1，run 37487600824）
@@ -30,13 +30,13 @@ CI 同时验证了 `run_once` 的跨平台调度：Windows 只执行 `.ps1`，ma
 
 | 步骤 | 覆盖 | 结果 |
 |---|---|---|
-| T2.1 隔离全量部署 | 5 个托管目标齐备、skills 38 目录 / 68 文件 | OK |
+| T2.1 隔离全量部署 | 5 个托管目标齐备、skills 40 目录 / 191 文件 | OK |
 | T2.1b `.chezmoiignore` | 仓库自有文件全部未落到目标目录 | OK |
 | R2 verbatim 逐字节 | AGENTS.md / usage.md / known_marketplaces.json 三个 sha256 一致 | OK |
-| R2b skills 逐字节 | 68 个技能文件逐字节一致、`dot_` 编码正确还原 | OK |
+| R2b skills 逐字节 | 191 个技能文件逐字节一致、`dot_` 与 `literal_` 编码正确还原 | OK |
 | R1 自定义 server | 自定义 server 保留、模板条目更新为渲染值、顶层自定义键保留、npx 版本已锁定 | OK |
 | R4 幂等 | 目标树 diff 为空、`chezmoi diff --exclude=scripts` 为空、无备份堆叠 | OK |
-| R3 skills 原子性 | 只读障碍下 apply 报 `Access is denied`，技能树仍为 38 目录 / 68 文件；障碍清除后完全恢复 | OK |
+| R3 skills 原子性 | 只读障碍下 apply 报 `Access is denied`，技能树仍为 40 目录 / 191 文件；障碍清除后完全恢复 | OK |
 | R3b 局部缺失收敛 | 删除 3 个技能文件后 apply 收敛一致 | OK |
 | R5 installed_plugins 渲染 | 无 `__ZCODE_HOME__` 残留、installPath 前缀 == homeDir、2 条记录结构正确 | OK |
 | 漂移检查 | `mcp-deps.yaml` ↔ 模板 ↔ 两个 run_once 脚本一致（5 个 server） | OK |
@@ -58,8 +58,8 @@ R3（中途失败不破坏技能树，障碍为只读文件）：
 ```
 注：apply 已按预期在该文件上失败：chezmoi: .zcode/skills/humanizer/SKILL.md:
     open .../SKILL.md: Access is denied.
-障碍存在时：目录 38 / 文件 68
-OK  R3 通过：失败时技能树保持 38 目录 / 68 文件，障碍清除后完全恢复
+障碍存在时：目录 40 / 文件 191
+OK  R3 通过：失败时技能树保持 40 目录 / 191 文件，障碍清除后完全恢复
 ```
 
 R0b（归档脚本动态复验，USERPROFILE 故意用反斜杠形式以真正触发转义）：

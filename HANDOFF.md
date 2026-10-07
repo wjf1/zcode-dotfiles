@@ -5,9 +5,9 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`v2.0.1`（2026-10-06）——`v2.0.0` 为 chezmoi 化迁移首发，`v2.0.1` 修复 CI 三平台矩阵暴露的可移植性缺陷（见 CHANGELOG）
+- **当前版本**：`v2.1.0`（2026-10-07）——同步 AGENTS.md 治理规范与代理端口，纳管 agent-reach 与 apk-reverse 技能（40 技能 / 191 文件）
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
-- **同步范围**：`~/.zcode` 中的默认指令、38 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
+- **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
 
 ## 2. 技术栈与运行基线
@@ -52,6 +52,11 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 - 新增 CI 三平台矩阵与 gitleaks 扫描；新增 5 份文档（README 双语、CHANGELOG、HANDOFF、PROBES、VERIFY）。
 - 相对迁移规格 v2.0 的**偏差 3 处**（详见 PROBES.md）：合并改用 `.py` 形态的 `modify_` 脚本（需 Python 3）；`usage_mcp.py` 改为克隆上游而非 vendor；MCP 保留 `npx` 但**锁定版本**。
 - `v2.0.1`：修复 macOS 上 `.sh` 的 `$VAR` 紧跟中日韩字符导致 `unbound variable`、Windows 上内联 Python 中文编码崩溃、CI gitleaks 下载地址 404；并新增两道闸门（`.sh` 变量名可移植性静态扫描、`ZCODE_SKIP_OS_GUARD=1` 让 Windows 也能跑到 `.sh` 主体）。
+- `v2.1.0`（2026-10-07）：
+  - **纳管两大核心开发与逆向技能**：纳管 `agent-reach`（16 平台全网调研路由）与 `apk-reverse`（Android APK 逆向工程与分析），全库技能增至 40 个（191 文件）。
+  - **同步全局指令与发布规范（AGENTS.md）**：引入 GitHub 发行版与版本发布规范（Release 标题与 tag 注释严格对齐 `v<X.Y.Z>: <中文核心摘要>`）、README 维护规范、接力开发文档规范（HANDOFF.md 强制六大核心模块模板）与四文档齐备门禁；修正 Windows 代理端口为 7900。
+  - **解决 chezmoi 保留前缀冲突**：`apk-reverse/scripts/run_probe.py` 命中 `run_` 脚本前缀，使用 `literal_run_probe.py` 转义；更新验收套件 `tests/acceptance.sh` 的 `decode()` 函数支持 `literal_` 还原校验。
+  - **验收沙箱加固**：修复 `winpath_backslash` 在 Git Bash 子 shell 中反斜杠转义丢失，修复 R0b 步骤 PowerShell 未深度隔离沙箱环境变量的问题。全量验收测试通过（ACCEPTANCE PASS）。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
@@ -76,5 +81,6 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 6. **`.ps1` 必须带 UTF-8 BOM**：Windows PowerShell 5.1 会把无 BOM 的 UTF-8 按系统代码页解码，直接语法报错。
 7. **断言不要匹配 PowerShell 的中文输出**：其 stdout 走系统代码页。两个 run_once 脚本已输出 ASCII 标记 `platform=windows|unix` / `skipped-by-unix-script`，验收只匹配 ASCII。
 8. **测试隔离用 `--destination` / `-c` / `--persistent-state` 三件套**，不要用 `HOME=` 覆盖（Windows 上 chezmoi 走 `USERPROFILE`，`HOME` 不生效）。
-9. **`exact_skills` 有删除语义**：任何"目标目录多出来的东西"都会在下一次 apply 被删。改动该目录结构时，同步更新 `tests/acceptance.sh` 的 R2b 断言（它按 `dot_` 解码规则比对 68 个文件）。
+9. **`exact_skills` 有删除语义**：任何"目标目录多出来的东西"都会在下一次 apply 被删。改动该目录结构时，同步更新 `tests/acceptance.sh` 的 R2b 断言（它按 `dot_` / `literal_` 解码规则比对 191 个文件）。
 10. **CI 的 `tests/acceptance.sh` 不做真机改动**：R3 的只读障碍在 Windows 上会让 apply 失败、在类 Unix 上可能被 rename 语义绕过，脚本对两种结果都接受，只对"技能树被清空/半套"零容忍。
+11. **技能源码中以 `run_` 开头的文件必须使用 `literal_` 转义**：chezmoi 会将 `run_` 开头的文件误判为执行脚本，导致排除脚本时无法部署为普通文件；必须重命名为 `literal_run_*.py`，chezmoi 部署时会自动剥离 `literal_` 前缀恢复文件名。

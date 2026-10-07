@@ -37,7 +37,7 @@ winpath() {
 winpath_backslash() {
   # 反斜杠形式：用于真正触发"JSON 转义"路径（R0 动态复验）
   if [ "$IS_WINDOWS" = 1 ] && command -v cygpath >/dev/null 2>&1; then
-    cygpath -w "$1" | sed 's|/|\\|g'
+    cygpath -w "$1" | sed 's|/|\\\\|g'
   else
     printf '%s' "$1"
   fi
@@ -87,9 +87,9 @@ c apply --exclude=scripts
 [ -f "$DEST/.zcode/cli/plugins/known_marketplaces.json" ] || fail "known_marketplaces.json 未部署"
 [ -f "$DEST/.zcode/cli/plugins/installed_plugins.json" ] || fail "installed_plugins.json 未部署"
 [ -f "$DEST/.zcode/cli/config.json" ] || fail "config.json 未渲染"
-[ "$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "38" ] || fail "skills 目录数不是 38"
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "68" ] || fail "skills 文件数不是 68"
-ok "五个托管目标齐备，skills 38 目录 / 68 文件"
+[ "$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "40" ] || fail "skills 目录数不是 40"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "skills 文件数不是 191"
+ok "五个托管目标齐备，skills 40 目录 / 191 文件"
 
 step "T2.1b .chezmoiignore：仓库自有文件不得落到目标目录"
 for f in README.md CHANGELOG.md HANDOFF.md mcp-deps.yaml tests tools legacy .github PROBES.md VERIFY.md; do
@@ -130,8 +130,12 @@ src_skills = os.path.join(root, "dot_zcode", "exact_skills")
 dst_skills = os.path.join(dest, ".zcode", "skills")
 
 def decode(name):
-    # chezmoi source 中 dot_ 前缀表示目标名以 . 开头
-    return "." + name[4:] if name.startswith("dot_") else name
+    # chezmoi source 中 dot_ 前缀表示目标名以 . 开头；literal_ 前缀用于转义保留前缀（如 run_）
+    if name.startswith("dot_"):
+        return "." + name[4:]
+    if name.startswith("literal_"):
+        return name[8:]
+    return name
 
 expected = {}
 for dirpath, dirnames, filenames in os.walk(src_skills):
@@ -163,10 +167,10 @@ for dirpath, dirnames, filenames in os.walk(dst_skills):
 if missing or mismatch or extra:
     print("缺失:", missing[:5], "内容不符:", mismatch[:5], "多余/未解码:", extra[:5])
     sys.exit(1)
-if len(expected) != 68:
-    print("期望 68 个技能文件，实际", len(expected))
+if len(expected) != 191:
+    print("期望 191 个技能文件，实际", len(expected))
     sys.exit(1)
-print("68 个技能文件逐字节一致，dot_ 编码已正确还原")
+print("191 个技能文件逐字节一致，dot_ 编码已正确还原")
 PY
 ok "skills 逐字节一致"
 
@@ -225,21 +229,21 @@ fi
 n_dirs=$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
 n_files=$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')
 echo "   障碍存在时：目录 $n_dirs / 文件 $n_files"
-[ "$n_dirs" = "38" ] || fail "失败后 skills 目录树被破坏（目录数 ${n_dirs}）"
-[ "$n_files" = "68" ] || fail "失败后 skills 被清空或半套（文件数 ${n_files}）"
+[ "$n_dirs" = "40" ] || fail "失败后 skills 目录树被破坏（目录数 ${n_dirs}）"
+[ "$n_files" = "191" ] || fail "失败后 skills 被清空或半套（文件数 ${n_files}）"
 chmod 644 "$OBSTACLE" 2>/dev/null || true
 c apply --exclude=scripts
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "68" ] || fail "障碍清除后未恢复 68 个技能文件"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "障碍清除后未恢复 191 个技能文件"
 if c diff --exclude=scripts | grep -q .; then c diff --exclude=scripts; fail "障碍清除后 diff 仍非空"; fi
 grep -q 'tampered' "$OBSTACLE" && fail "被篡改的技能文件未恢复为仓库内容"
-ok "R3 通过：失败时技能树保持 38 目录 / 68 文件，障碍清除后完全恢复"
+ok "R3 通过：失败时技能树保持 40 目录 / 191 文件，障碍清除后完全恢复"
 
 step "R3b 局部缺失可收敛（模拟上一次中断留下的半套状态）"
 rm -f "$DEST/.zcode/skills/humanizer/SKILL.md" \
       "$DEST/.zcode/skills/doc-coauthoring/SKILL.md" \
       "$DEST/.zcode/skills/pdf/SKILL.md" 2>/dev/null || true
 c apply --exclude=scripts
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "68" ] || fail "局部缺失未被补齐"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "局部缺失未被补齐"
 if c diff --exclude=scripts | grep -q .; then fail "补齐后 diff 非空"; fi
 ok "R3b 通过：删除部分技能后 apply 收敛一致"
 
@@ -323,7 +327,7 @@ else
 EOF
   # 故意用反斜杠形式的 USERPROFILE，才能真正触发"路径转义"这条修复
   RHOME_W=$(winpath_backslash "$RHOME")
-  if USERPROFILE="$RHOME_W" "$PS" -NoProfile -ExecutionPolicy Bypass -File "$(winpath "$R0/repo/deploy.ps1")" > "$WORK/r0.log" 2>&1; then
+  if "$PS" -NoProfile -ExecutionPolicy Bypass -Command "& { \$env:USERPROFILE = '$RHOME_W'; & '$(winpath "$R0/repo/deploy.ps1")' }" > "$WORK/r0.log" 2>&1; then
     py - "$RHOME" "$RHOME_W" <<'PY'
 import json, os, sys
 home_posix, home_win = sys.argv[1], sys.argv[2]

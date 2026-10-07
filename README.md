@@ -60,7 +60,7 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 │   │   └── plugins/
 │   │       ├── installed_plugins.json.tmpl   # installPath 按本机 homeDir 渲染
 │   │       └── known_marketplaces.json       # verbatim
-│   └── exact_skills/                    # → ~/.zcode/skills/（38 个技能，exact_ 镜像语义）
+│   └── exact_skills/                    # → ~/.zcode/skills/（40 个技能，exact_ 镜像语义）
 ├── run_once_after_10-install-mcp-deps.{sh,ps1}   # 每机一次：依赖检测 + 渲染产物自检
 ├── tests/acceptance.sh                  # R0–R5 验收（本地与 CI 共用）
 ├── tools/adopt-local-skills.{sh,ps1}    # 纳管本机未跟踪技能
@@ -73,7 +73,7 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 
 | 层 | 内容 | 存储 | 部署方式 |
 |---|---|---|---|
-| L1 平台无关 | `AGENTS.md`、`commands/usage.md`、`known_marketplaces.json`、38 个 skills | verbatim | 直接复制；skills 用 `exact_` 镜像 |
+| L1 平台无关 | `AGENTS.md`、`commands/usage.md`、`known_marketplaces.json`、40 个 skills | verbatim | 直接复制；skills 用 `exact_` 镜像 |
 | L2 路径相关 | `cli/config.json`、`cli/plugins/installed_plugins.json` | Go 模板 | 按 OS 与本机 homeDir 渲染 |
 | L3 机器依赖 | 5 个 MCP 的外部可执行文件 | `mcp-deps.yaml` | `run_once` 检测 + 指引 |
 | L4 凭证与缓存 | OAuth token、API 密钥、会话、日志、插件缓存 | **刻意不同步** | 部署后手动登录 / 由 ZCode 自行下载 |
@@ -189,7 +189,7 @@ The repository root *is* the chezmoi source state: `dot_zcode/` maps to `~/.zcod
 
 | Layer | Content | Storage | Deployment |
 |---|---|---|---|
-| L1 platform-agnostic | `AGENTS.md`, `commands/usage.md`, `known_marketplaces.json`, 38 skills | verbatim | plain copy; skills use `exact_` |
+| L1 platform-agnostic | `AGENTS.md`, `commands/usage.md`, `known_marketplaces.json`, 40 skills | verbatim | plain copy; skills use `exact_` |
 | L2 path-dependent | `cli/config.json`, `cli/plugins/installed_plugins.json` | Go template | rendered per OS and per `homeDir` |
 | L3 machine deps | the 5 MCP executables | `mcp-deps.yaml` | detected by `run_once`, with guidance |
 | L4 credentials & cache | OAuth tokens, API keys, sessions, logs, plugin cache | **not synced** | sign in again / let ZCode re-download |

@@ -2,6 +2,30 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.1.0 — 2026-10-07
+
+### 新增
+
+- **纳管两大核心开发与逆向技能（40 技能 / 191 文件）**：
+  - `agent-reach`：跨 16 个内容平台（小红书、推特、B站、Reddit、YouTube 等）的全网调研、搜索与多后端智能路由。
+  - `apk-reverse`：Android APK 逆向工程、静态反编译、Frida 动态插桩、去除广告与 SDK、dex 补丁与重打包分析。
+- **收录新版项目治理与发布规范（AGENTS.md）**：
+  - `## GitHub 发行版与版本发布规范`：强制统一 Release 标题规范 `v<X.Y.Z>: <中文核心摘要>`、四文档（版本/CHANGELOG/README/HANDOFF）齐备核验硬门禁、annotated tag 标题注释对齐。
+  - `## README 维护规范`：强制中英双语维护、配图可视化说明、代码提交推送前阻塞型同步门禁。
+  - `## 接力开发文档规范（HANDOFF.md）`：全项目强制统一维护六大核心模块模板、新会话接入第一步必读机制。
+  - `## 代码变更发布流程`：强化功能/安全验证测试、文档更新齐备、Tag 与 Release 规范核验流程。
+
+### 修复
+
+- **网络代理端口配置纠偏**：将 `AGENTS.md` 中 CLI 代理说明从旧端口 `7897` 更新为当前 Clash Verge 混合端口 `7900`（2026-10-06 变更），并修正 `NO_PROXY` 环境变量描述。
+- **chezmoi 特殊保留前缀兼容（apk-reverse）**：
+  - `apk-reverse/scripts/run_probe.py` 命中 chezmoi 的 `run_` 脚本保留前缀，使用 `literal_run_probe.py` 进行转义，确保排除脚本时仍能作为普通文件正确部署。
+  - 更新验收脚本 `tests/acceptance.sh`，增强 `decode()` 支持 `literal_` 前缀还原比对。
+- **验收套件沙箱环境隔离与断言修复（tests/acceptance.sh）**：
+  - 修复 `winpath_backslash` 在 Git Bash 子 shell 中反斜杠转义丢失的问题。
+  - 修复 R0b 步骤中 PowerShell 进程未正确隔离用户目录导致尝试备份宿主机真实 `~/.zcode` 的缺陷，改用显式沙箱参数启动。
+  - 同步调整技能目录数断言为 40，文件总数断言为 191。
+
 ## v2.0.1 — 2026-10-06
 
 v2.0.0 推送后，CI 的三平台矩阵在 **macOS** 与 **Windows** 上暴露了三个真实缺陷，本版修复。Linux 平台自 v2.0.0 起即通过。
