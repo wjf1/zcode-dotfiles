@@ -57,6 +57,10 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **同步全局指令与发布规范（AGENTS.md）**：引入 GitHub 发行版与版本发布规范（Release 标题与 tag 注释严格对齐 `v<X.Y.Z>: <中文核心摘要>`）、README 维护规范、接力开发文档规范（HANDOFF.md 强制六大核心模块模板）与四文档齐备门禁；修正 Windows 代理端口为 7900。
   - **解决 chezmoi 保留前缀冲突**：`apk-reverse/scripts/run_probe.py` 命中 `run_` 脚本前缀，使用 `literal_run_probe.py` 转义；更新验收套件 `tests/acceptance.sh` 的 `decode()` 函数支持 `literal_` 还原校验。
   - **验收沙箱加固**：修复 `winpath_backslash` 在 Git Bash 子 shell 中反斜杠转义丢失，修复 R0b 步骤 PowerShell 未深度隔离沙箱环境变量的问题。全量验收测试通过（ACCEPTANCE PASS）。
+- `v2.1.1`（2026-10-08）：
+  - **输出语言规则强化**：`AGENTS.md` 该章节改为覆盖客户端全部透传字段（TodoWrite `content`、任务卡片标题、进度描述等），并明确「例外清单」与中英混排语序。
+  - **代理条目按实测重写**：记录 Windows 系统代理指向 Clash Verge 混合端口 `127.0.0.1:7900`（会漂移）、npm 需单独配置代理、`chezmoi init` 克隆时把系统代理误解析为无端口 `127.0.0.1` 的已知坑与绕行方式。
+  - **主力机完成 chezmoi 接管**：见第 5 节第 3 条（已结项）。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
@@ -64,7 +68,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 
 1. **macOS / Linux 真机实测（P0，阻塞"三平台可用"的对外声明）**：跑一遍单命令部署，确认 `~/.zcode` 路径、`/usr/bin/python3` 存在性、`exact_` 权限语义、`npx` 三包可启动；结果补进 VERIFY.md。
 2. **ZCode 读取 `installed_plugins.json` 的行为（P1）**：在新机上观察 `installPath` 指向空缓存目录时，ZCode 是提示安装还是误认为已装。若为后者，考虑把该文件改为不渲染 `plugins`，或干脆不同步。
-3. **存量机（主力 Windows 机）切换（P1）**：切之前必须 `tools/adopt-local-skills.ps1 -Add` 纳管本机未跟踪技能——本机现有 **39** 个技能目录而仓库侧 38 个（多出的是 `agent-reach`），直接 apply 会被 `exact_` 删除。建议流程：备份 `~/.zcode` → `chezmoi diff` 全量审阅 → adopt → apply → 与备份比对差异清单。
+3. ~~**存量机（主力 Windows 机）切换（P1）**~~ **已完成（2026-10-08）**：主力机装好 chezmoi v2.73.0 并接入源仓库（`~/.local/share/chezmoi`）。切换前已把本机技能补齐到与仓库一致的 40 个（`agent-reach`、`apk-reverse` 手工落位，含 `literal_` 前缀还原），故 `exact_` 无删除动作。实际踩到的坑有两条，均已记入第 6 节：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
 4. **`exact_` 与 `npx skills add` 的摩擦（P2）**：目前靠 adopt 助手 + README 纪律兜底。若嫌麻烦，可去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留）。决策前建议先实测一两周的日常手感。
 5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
 6. **chezmoi 版本升级（P3）**：升到含 `chezmoi:modify-template` + `.chezmoi.stdin` 的版本后，可评估把 `config.json` 合并改回纯模板实现（省掉 Python 依赖）。届时需重跑验收。
