@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`v2.1.0`（2026-10-07）——同步 AGENTS.md 治理规范与代理端口，纳管 agent-reach 与 apk-reverse 技能（40 技能 / 191 文件）
+- **当前版本**：`v2.1.2`（2026-10-12）——`AGENTS.md` 双向合并（并入主力机的「前端 DOM 变更验收规范」等增量，15227 → 18886 字节）；本机（主力 Windows 机）复核并重新完成 chezmoi 接管
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -61,6 +61,10 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **输出语言规则强化**：`AGENTS.md` 该章节改为覆盖客户端全部透传字段（TodoWrite `content`、任务卡片标题、进度描述等），并明确「例外清单」与中英混排语序。
   - **代理条目按实测重写**：记录 Windows 系统代理指向 Clash Verge 混合端口 `127.0.0.1:7900`（会漂移）、npm 需单独配置代理、`chezmoi init` 克隆时把系统代理误解析为无端口 `127.0.0.1` 的已知坑与绕行方式。
   - **主力机完成 chezmoi 接管**：见第 5 节第 3 条（已结项）。
+- `v2.1.2`（2026-10-12）：
+  - **`AGENTS.md` 双向合并**：以主力机 2026-10-11 版为基线，吸收仓库 v2.1.1 的增量，形成两侧超集（15227 → 18886 字节）。新增 `## 前端 DOM 变更验收规范`（id 唯一性硬门禁 / DOM 断言校验祖先链 / UI 真实点击走查 / 遮挡排查顺序 / 同 URL 资源 no-cache）、「全文优先级索引」、「Tag 与项目版本常量的映射」、Token 效率「不豁免质量门禁」、README 规范「同分支同步提交」；保留 v2.1.1 的输出语言强化与代理条目（合并为「CLI 与 npm 不读 Windows 系统代理」）。
+  - **纠正上一轮的接管状态记录**：本轮复核发现本机 `~/.local/share/chezmoi` 源目录与 chezmoi 配置均缺失（v2.1.1 记录的接管实际未生效 / 已丢失），已按「先手动 clone 到源目录、再 `chezmoi init --promptDefaults --apply`」路径重新完成接管。详见第 5 节第 3 条。
+  - **顺带成为「双向同步」这一新场景的首个样本**：云端与某台已部署机的 `AGENTS.md` 各自演进后，需按「并集合并」而非「单向覆盖」处理——单向 apply 会静默丢掉本地独有的规范章节。合并时先用文件级 diff 判定差异是「行尾 / 时间戳噪音」还是「实质内容」，避免误合并。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
@@ -68,7 +72,10 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 
 1. **macOS / Linux 真机实测（P0，阻塞"三平台可用"的对外声明）**：跑一遍单命令部署，确认 `~/.zcode` 路径、`/usr/bin/python3` 存在性、`exact_` 权限语义、`npx` 三包可启动；结果补进 VERIFY.md。
 2. **ZCode 读取 `installed_plugins.json` 的行为（P1）**：在新机上观察 `installPath` 指向空缓存目录时，ZCode 是提示安装还是误认为已装。若为后者，考虑把该文件改为不渲染 `plugins`，或干脆不同步。
-3. ~~**存量机（主力 Windows 机）切换（P1）**~~ **已完成（2026-10-08）**：主力机装好 chezmoi v2.73.0 并接入源仓库（`~/.local/share/chezmoi`）。切换前已把本机技能补齐到与仓库一致的 40 个（`agent-reach`、`apk-reverse` 手工落位，含 `literal_` 前缀还原），故 `exact_` 无删除动作。实际踩到的坑有两条，均已记入第 6 节：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
+3. ~~**存量机（主力 Windows 机）切换（P1）**~~ **已完成（2026-10-08），并于 2026-10-12 复核后重新接管**：主力机装好 chezmoi v2.73.0 并接入源仓库（`~/.local/share/chezmoi`）。切换前已把本机技能补齐到与仓库一致的 40 个（`agent-reach`、`apk-reverse` 手工落位，含 `literal_` 前缀还原），故 `exact_` 无删除动作。
+   - **2026-10-12 复核结论**：本机 `~/.local/share/chezmoi` 与 `~/.config/chezmoi/chezmoi.toml` 均不存在（`chezmoi doctor` 报 source-dir error），即上一轮记录的"接管"在本机并未真正生效。**教训**：`chezmoi init --apply` 是否落地必须用 `chezmoi doctor` / `chezmoi status` 复核，不能只看命令退出码。
+   - **本轮接管路径**（避开已知的代理坑）：先 `git clone <repo> ~/.local/share/chezmoi` 手动落源目录，再 `chezmoi init --promptDefaults --apply`——源目录已是 git 仓库时 chezmoi 跳过克隆，`--promptDefaults` 让两个 `promptStringOnce` 直接取默认值，全程免交互（否则 agent 会话里会卡在交互提示）。
+   - 实际踩到的坑（已记入第 6 节）：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
 4. **`exact_` 与 `npx skills add` 的摩擦（P2）**：目前靠 adopt 助手 + README 纪律兜底。若嫌麻烦，可去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留）。决策前建议先实测一两周的日常手感。
 5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
 6. **chezmoi 版本升级（P3）**：升到含 `chezmoi:modify-template` + `.chezmoi.stdin` 的版本后，可评估把 `config.json` 合并改回纯模板实现（省掉 Python 依赖）。届时需重跑验收。
@@ -88,3 +95,6 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 9. **`exact_skills` 有删除语义**：任何"目标目录多出来的东西"都会在下一次 apply 被删。改动该目录结构时，同步更新 `tests/acceptance.sh` 的 R2b 断言（它按 `dot_` / `literal_` 解码规则比对 191 个文件）。
 10. **CI 的 `tests/acceptance.sh` 不做真机改动**：R3 的只读障碍在 Windows 上会让 apply 失败、在类 Unix 上可能被 rename 语义绕过，脚本对两种结果都接受，只对"技能树被清空/半套"零容忍。
 11. **技能源码中以 `run_` 开头的文件必须使用 `literal_` 转义**：chezmoi 会将 `run_` 开头的文件误判为执行脚本，导致排除脚本时无法部署为普通文件；必须重命名为 `literal_run_*.py`，chezmoi 部署时会自动剥离 `literal_` 前缀恢复文件名。
+12. **agent / 非交互会话里 `chezmoi init` 必须配 `--promptDefaults`（或预写配置）**：`.chezmoi.toml.tmpl` 的 `promptStringOnce` 在无 TTY 环境会阻塞或失败。默认值在本机均可用（Python312 解释器、codebase-memory-mcp.exe 都已安装），故 `--promptDefaults` 是安全选择；若要显式指定可用 `--promptString <var>=<value>`。
+13. **接管是否真的生效，用 `chezmoi doctor`（source-dir / working-tree 行）+ `chezmoi status` 复核**：本机就出现过"记录为已接管、实际源目录缺失"的情况——只信命令退出码会漏判。
+14. **双向演进后必须并集合并，不能单向覆盖**：云端与已部署机的 `AGENTS.md` 可能各自新增章节（如本机新增「前端 DOM 变更验收规范」而云端新增输出语言强化）。直接 `apply`（云端 → 本地）或 `chezmoi add`（本地 → 云端）都会静默丢掉另一侧的独有内容。判定差异时要先区分「行尾 / 时间戳噪音」（如 skills 的 CRLF vs LF、`known_marketplaces.json` 的 `lastUpdated`）与「实质内容」，再决定是否合并。

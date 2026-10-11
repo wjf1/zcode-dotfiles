@@ -6,6 +6,7 @@ ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，由 [chezmo
 [English](#zcode-dotfiles-english) | [中文](#中文)
 
 - 迁移前的两个 PowerShell 脚本已归档到 [`legacy/`](legacy/README.md)（**历史参照，不可执行**）
+- `dot_zcode/AGENTS.md` 收录的强制规范：输出语言、服务启停确认、Token 效率、Subagent 派发、技能安装、代码变更发布与四文档门禁、GitHub 发行版规范、README / HANDOFF 维护、Bash 命令硬约束、工具调用避坑、前端 DOM 变更验收
 - 验收与回归：`sh tests/acceptance.sh`（本地与 CI 共用，覆盖 R0–R5）
 - 探测结论：[`PROBES.md`](PROBES.md)　验收记录：[`VERIFY.md`](VERIFY.md)　接力开发：[`HANDOFF.md`](HANDOFF.md)
 
@@ -154,7 +155,7 @@ CI 在 ubuntu / macos / windows 三平台跑同一脚本，并附加 gitleaks �
 Cross-machine config sync for the ZCode desktop app (an AI coding tool), managed by [chezmoi](https://www.chezmoi.io/).
 It versions the reusable parts of `~/.zcode` (default instructions, skills, commands, MCP config, plugin sources) so that macOS, Linux and Windows machines can be provisioned with a single command.
 
-The two pre-migration PowerShell scripts are archived under [`legacy/`](legacy/README.md) — **historical reference only, not executable**. Acceptance tests live in `tests/acceptance.sh` (shared by local runs and CI, covering R0–R5); see [`PROBES.md`](PROBES.md), [`VERIFY.md`](VERIFY.md) and [`HANDOFF.md`](HANDOFF.md).
+The two pre-migration PowerShell scripts are archived under [`legacy/`](legacy/README.md) — **historical reference only, not executable**. `dot_zcode/AGENTS.md` carries the mandatory project rules: output language, service start/stop confirmation, token efficiency, subagent dispatch, skill installation, the four-document release gate, GitHub release conventions, README / HANDOFF maintenance, Bash hard constraints, tool-invocation pitfalls, and the front-end DOM change acceptance rules. Acceptance tests live in `tests/acceptance.sh` (shared by local runs and CI, covering R0–R5); see [`PROBES.md`](PROBES.md), [`VERIFY.md`](VERIFY.md) and [`HANDOFF.md`](HANDOFF.md).
 
 ### 1. One-command setup (new machine)
 
