@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`v2.1.2`（2026-10-12）——`AGENTS.md` 双向合并（并入主力机的「前端 DOM 变更验收规范」等增量，15227 → 18886 字节）；本机（主力 Windows 机）复核并重新完成 chezmoi 接管
+- **当前版本**：`v2.1.3`（2026-10-12）——补并 v2.1.2 遗漏的「任务清单同步」章节（18886 → 19666 字节）；本机（主力 Windows 机）`chezmoi apply` 后与源逐字节一致
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -65,6 +65,9 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **`AGENTS.md` 双向合并**：以主力机 2026-10-11 版为基线，吸收仓库 v2.1.1 的增量，形成两侧超集（15227 → 18886 字节）。新增 `## 前端 DOM 变更验收规范`（id 唯一性硬门禁 / DOM 断言校验祖先链 / UI 真实点击走查 / 遮挡排查顺序 / 同 URL 资源 no-cache）、「全文优先级索引」、「Tag 与项目版本常量的映射」、Token 效率「不豁免质量门禁」、README 规范「同分支同步提交」；保留 v2.1.1 的输出语言强化与代理条目（合并为「CLI 与 npm 不读 Windows 系统代理」）。
   - **纠正上一轮的接管状态记录**：本轮复核发现本机 `~/.local/share/chezmoi` 源目录与 chezmoi 配置均缺失（v2.1.1 记录的接管实际未生效 / 已丢失），已按「先手动 clone 到源目录、再 `chezmoi init --promptDefaults --apply`」路径重新完成接管。详见第 5 节第 3 条。
   - **顺带成为「双向同步」这一新场景的首个样本**：云端与某台已部署机的 `AGENTS.md` 各自演进后，需按「并集合并」而非「单向覆盖」处理——单向 apply 会静默丢掉本地独有的规范章节。合并时先用文件级 diff 判定差异是「行尾 / 时间戳噪音」还是「实质内容」，避免误合并。
+- `v2.1.3`（2026-10-12）：
+  - **补并 v2.1.2 遗漏的本地增量**：`AGENTS.md` 补入 2026-10-10 加入本机但 v2.1.1 / v2.1.2 均未收录的 `## 任务清单同步（TodoWrite / 会话卡片）` 章节（18886 → 19666 字节），并同步更新「全文优先级索引」；`chezmoi apply` 后本机 `~/.zcode/AGENTS.md`、`cli/config.json` 与源逐字节一致（config.json 顺势补上落后的 `zcode-token-usage-statusbar.timeoutMs`）。
+  - **「双向同步」场景的第二个样本**：与 v2.1.2 的"云端 vs 主力机"合并相比，本次是"两次合并都漏掉了本机存量节"——处理路径固定为「先拉齐云端（`git -c http.proxy= pull` 绕开故障代理）→ 源文件做并集编辑 → `chezmoi apply` 落地 → 文档四件套 + tag + 推送」，全程不做单向覆盖。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
@@ -76,6 +79,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
    - **2026-10-12 复核结论**：本机 `~/.local/share/chezmoi` 与 `~/.config/chezmoi/chezmoi.toml` 均不存在（`chezmoi doctor` 报 source-dir error），即上一轮记录的"接管"在本机并未真正生效。**教训**：`chezmoi init --apply` 是否落地必须用 `chezmoi doctor` / `chezmoi status` 复核，不能只看命令退出码。
    - **本轮接管路径**（避开已知的代理坑）：先 `git clone <repo> ~/.local/share/chezmoi` 手动落源目录，再 `chezmoi init --promptDefaults --apply`——源目录已是 git 仓库时 chezmoi 跳过克隆，`--promptDefaults` 让两个 `promptStringOnce` 直接取默认值，全程免交互（否则 agent 会话里会卡在交互提示）。
    - 实际踩到的坑（已记入第 6 节）：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
+   - **2026-10-12 二次复核（v2.1.3 发布时）**：接管本次确认生效——`chezmoi status` 空输出、`chezmoi apply` 幂等、`~/.zcode/AGENTS.md` 与 `cli/config.json` 对源逐字节一致。另实测当日代理链路抖动：git 经 `127.0.0.1:7900` 访问 GitHub 握手失败、直连正常，`git -c http.proxy=` 仍是最可靠绕行。
 4. **`exact_` 与 `npx skills add` 的摩擦（P2）**：目前靠 adopt 助手 + README 纪律兜底。若嫌麻烦，可去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留）。决策前建议先实测一两周的日常手感。
 5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
 6. **chezmoi 版本升级（P3）**：升到含 `chezmoi:modify-template` + `.chezmoi.stdin` 的版本后，可评估把 `config.json` 合并改回纯模板实现（省掉 Python 依赖）。届时需重跑验收。

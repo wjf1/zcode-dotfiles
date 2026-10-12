@@ -2,6 +2,19 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.1.3 — 2026-10-12
+
+### 变更
+
+- **补并 v2.1.2 遗漏的本地增量：「任务清单同步」章节正式入库（18886 → 19666 字节，工作区 CRLF 口径）**。2026-10-10 加入本机（主力 Windows 机）`~/.zcode/AGENTS.md` 的 `## 任务清单同步（TodoWrite / 会话卡片，所有任务强制生效）` 章节未被 v2.1.1 / v2.1.2 收录，属"单向 apply 会静默丢失"的本地独有内容（HANDOFF §6 第 14 条场景的又一次出现）：
+  - `AGENTS.md` 在「服务启停确认」与「Token 效率规则」之间补入该节（TodoWrite 清单为会话待办卡片唯一数据源；完成一项立即回写、禁止攒批；受阻解除立即回写；按全量清单提交、禁止漏项），并同步把「全文优先级索引」第 ② 类的规范列表补上该章节。
+  - 本机（主力 Windows 机）随之完成配置对齐：`chezmoi apply` 后 `~/.zcode/AGENTS.md` 与 `cli/config.json` 与源逐字节一致；`config.json` 此前落后于模板（缺 `zcode-token-usage-statusbar.timeoutMs`），已一并补齐。
+
+### 验证
+
+- 本机 `chezmoi status` 空输出；`~/.zcode/AGENTS.md`、`~/.zcode/cli/config.json` 对源 diff 为空（工作区 CRLF 逐字节一致）。
+- `sh tests/acceptance.sh` 在 Windows 上退出码 0（ACCEPTANCE PASS）。
+
 ## v2.1.2 — 2026-10-12
 
 ### 变更
