@@ -104,6 +104,8 @@ chezmoi apply         # 仅应用本地 source 状态
 
 机器独有的 MCP server 可以直接加进 `config.json`，**不会被清除**：`apply` 时模板声明的条目会整体覆盖同名条目，模板未声明的条目（包括顶层自定义键）原样保留。
 
+你在 ZCode 设置页对**模板已声明**的 server 做的启用/禁用开关会被保留（`enabled` 字段继承）；但条目内的 command / args / timeoutMs 始终以模板为准。
+
 ### 6. 技能：`exact_` 语义与 adopt 助手 ⚠️
 
 `dot_zcode/exact_skills/` 带 `exact_` 语义：**目标 `~/.zcode/skills/` 里任何未被仓库纳管的技能，会在下一次 `apply` 时被删除。**
@@ -219,6 +221,8 @@ chezmoi apply         # apply the local source state only
 > ⚠️ Running `chezmoi add` on a **template** file overwrites the template with machine-rendered literals: OS branches and local paths get hard-coded and break every other machine on the next apply. That is a destructive operation.
 
 Machine-local MCP servers you add to `config.json` are **not** wiped: entries declared by the template replace same-named entries wholesale, while undeclared entries (including custom top-level keys) are preserved.
+
+Enable/disable toggles you set in the ZCode settings page for **template-declared** servers are preserved (the `enabled` field is inherited); but command / args / timeoutMs inside each entry always follow the template.
 
 ### 6. Skills: `exact_` semantics and the adopt helper ⚠️
 

@@ -204,6 +204,33 @@ print("自定义 server 保留 / 模板条目更新 / 顶层自定义键保留 /
 PY
 ok "R1 通过"
 
+# ---------- R1b 模板声明条目继承目标机 enabled 开关 ----------
+step "R1b 模板声明条目继承目标机 enabled 开关（设置页禁用不被 apply 还原）"
+py - "$DEST/.zcode/cli/config.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+cfg = json.load(open(path, encoding="utf-8"))
+cfg["mcp"]["servers"]["context7"] = {"enabled": False, "command": "stale", "args": [], "timeoutMs": 1000}
+json.dump(cfg, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+PY
+c apply --exclude=scripts
+py - "$DEST/.zcode/cli/config.json" <<'PY'
+import json, sys, os
+cfg = json.load(open(sys.argv[1], encoding="utf-8"))
+s = cfg["mcp"]["servers"]
+c7 = s["context7"]
+assert c7.get("enabled") is False, "设置页禁用开关被 apply 还原：%r" % c7.get("enabled")
+npx = "npx.cmd" if os.name == "nt" else "npx"
+assert c7["command"] == npx, "command 未恢复为模板值：%r" % c7["command"]
+assert c7["args"] == ["-y", "@upstash/context7-mcp@4.1.0"], "args 未恢复为锁定版本：%r" % c7["args"]
+assert c7.get("timeoutMs") == 60000, "timeoutMs 未恢复为模板值：%r" % c7.get("timeoutMs")
+assert c7.get("type") == "stdio", "type 未恢复为模板值"
+no_enabled = [n for n in s if n != "context7" and "enabled" in s[n]]
+assert not no_enabled, "其余 server 被误加 enabled 开关：%s" % no_enabled
+print("enabled=false 继承保留 / command、args、timeoutMs、type 恢复模板值 / 其余 server 不受影响")
+PY
+ok "R1b 通过"
+
 # ---------- R4 幂等 ----------
 step "R4 幂等：连续 apply 零变更、无备份堆叠"
 find "$DEST" | sort > "$WORK/snap1"

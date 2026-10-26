@@ -9,7 +9,9 @@
 #
 # 合并规则（幂等、全程非交互）：
 #   1. 模板未声明的顶层键一律保留；
-#   2. mcp.servers 中模板声明的条目整体覆盖同名条目（模板为准），目标机独有的条目原样保留；
+#   2. mcp.servers 中模板声明的条目整体覆盖同名条目（模板为准）；
+#      但目标机已有的 enabled/enable 布尔开关会被继承，避免用户在 ZCode 设置页的禁用被 apply 还原；
+#      目标机独有的条目原样保留；
 #   3. plugins.enabledPlugins 按键合并，模板声明的开关胜出，其余键保留。
 import json
 import os
@@ -87,7 +89,12 @@ def merge(dst, des):
     mcp = dict(out.get("mcp") or {})
     servers = dict(mcp.get("servers") or {})
     for name, cfg in (des.get("mcp") or {}).get("servers", {}).items():
-        servers[name] = cfg
+        merged = dict(cfg)
+        prev = servers.get(name) or {}
+        for key in ("enabled", "enable"):        # schema 用 enabled；设置页实测可能写 enable
+            if isinstance(prev.get(key), bool):
+                merged[key] = prev[key]
+        servers[name] = merged
     mcp["servers"] = servers
     out["mcp"] = mcp
     return out
