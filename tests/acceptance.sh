@@ -197,7 +197,10 @@ assert cfg.get("myTopLevel", {}).get("keep") is True, "顶层自定义键被丢�
 npx = "npx.cmd" if os.name == "nt" else "npx"
 assert s["context7"]["command"] == npx, "模板内条目未更新为渲染值：%r" % s["context7"]["command"]
 assert s["context7"]["args"] == ["-y", "@upstash/context7-mcp@4.1.0"], "npx 版本未锁定"
-print("自定义 server 保留 / 模板条目更新 / 顶层自定义键保留 / npx 版本已锁定")
+for name in ("context7", "sequential-thinking", "chrome-devtools",
+             "zcode-token-usage-statusbar"):
+    assert s[name].get("type") == "stdio", "%s 缺少显式 type" % name
+print("自定义 server 保留 / 模板条目更新 / 顶层自定义键保留 / npx 版本已锁定 / type=stdio 已显式声明")
 PY
 ok "R1 通过"
 

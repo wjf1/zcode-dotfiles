@@ -32,27 +32,32 @@ DESIRED = {
             # 版本在 2026-10-06 按主力机 E:\OpenCode\node_modules 实测锁定，
             # 避免 npx -y 静默浮动到最新版（chrome-devtools 等 MCP 行为会随之变化）。
             "context7": {
+                "type": "stdio",
                 "command": {{ $npx | printf "%q" }},
                 "args": ["-y", "@upstash/context7-mcp@4.1.0"],
                 "timeoutMs": 60000,
             },
             "sequential-thinking": {
+                "type": "stdio",
                 "command": {{ $npx | printf "%q" }},
                 "args": ["-y", "@modelcontextprotocol/server-sequential-thinking@2026.8.31"],
                 "timeoutMs": 60000,
             },
             "chrome-devtools": {
+                "type": "stdio",
                 "command": {{ $npx | printf "%q" }},
                 "args": ["-y", "chrome-devtools-mcp@1.9.0"],
                 "timeoutMs": 120000,
             },
             "zcode-token-usage-statusbar": {
+                "type": "stdio",
                 "command": {{ .zcodePythonPath | printf "%q" }},
                 "args": [{{ joinPath .chezmoi.homeDir ".zcode" "zcode-token-usage-statusbar" "usage_mcp.py" | printf "%q" }}],
                 "timeoutMs": 60000,
             },
 {{- if and (eq .chezmoi.os "windows") .zcodeCodebaseMemoryPath }}
             "codebase-memory-mcp": {
+                "type": "stdio",
                 "command": {{ .zcodeCodebaseMemoryPath | printf "%q" }},
                 "args": [],
                 "timeoutMs": 120000,

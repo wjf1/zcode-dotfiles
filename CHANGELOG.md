@@ -2,6 +2,12 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.2.0 — 2026-10-26
+
+### 变更
+
+- **MCP server 条目补显式 `"type": "stdio"`（P0-1）**：`modify_config.json.py.tmpl` 的 5 个声明条目（context7、sequential-thinking、chrome-devtools、zcode-token-usage-statusbar、codebase-memory-mcp）全部在对象首键显式声明传输类型，符合 ZCode ≥3.16 的配置规范，不再依赖"缺 type 自动归一化"的兼容逻辑；刻意**不加** `enabled` 字段（默认值语义归 T4/后续版本处理，避免 apply 强行重新启用用户在设置页手动禁用的 server）。验收脚本 R1 断言同步新增"四个无条件渲染的 server 必须带 `type: stdio`"检查。
+
 ## v2.1.3 — 2026-10-12
 
 ### 变更
