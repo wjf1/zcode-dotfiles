@@ -58,6 +58,12 @@ done
 [ -n "$PY" ] || fail "需要可用的 Python 3：config.json 合并脚本与若干断言依赖它"
 PY_W=$(winpath "$PY")
 
+# 技能计数以源侧为准（源与目标 1:1 映射，dot_/literal_ 只改前缀不改数量），
+# 技能增删不再需要手改本文件里多处硬编码断言。
+SRC_SKILLS="$ROOT/dot_zcode/exact_skills"
+SKILL_DIRS=$(find "$SRC_SKILLS" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+SKILL_FILES=$(find "$SRC_SKILLS" -type f | wc -l | tr -d ' ')
+
 rm -rf "$WORK"
 mkdir -p "$WORK" "$DEST"
 cat > "$WORK/chezmoi.toml" <<EOF
@@ -78,6 +84,7 @@ c() { chezmoi -c "$CFG_W" -S "$ROOT_W" -D "$DEST_W" --persistent-state "$STATE_W
 py() { "$PY" "$@"; }
 
 echo "ZCode dotfiles 验收开始（platform: $(uname -s 2>/dev/null || echo unknown)）"
+echo "skills: ${SKILL_DIRS} dirs / ${SKILL_FILES} files"
 
 # ---------- T2.1 隔离全量部署 + 结构断言 ----------
 step "T2.1 隔离全量部署"
@@ -87,9 +94,9 @@ c apply --exclude=scripts
 [ -f "$DEST/.zcode/cli/plugins/known_marketplaces.json" ] || fail "known_marketplaces.json 未部署"
 [ -f "$DEST/.zcode/cli/plugins/installed_plugins.json" ] || fail "installed_plugins.json 未部署"
 [ -f "$DEST/.zcode/cli/config.json" ] || fail "config.json 未渲染"
-[ "$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "40" ] || fail "skills 目录数不是 40"
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "skills 文件数不是 191"
-ok "五个托管目标齐备，skills 40 目录 / 191 文件"
+[ "$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "$SKILL_DIRS" ] || fail "skills 目录数与源侧不一致（期望 ${SKILL_DIRS}）"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "$SKILL_FILES" ] || fail "skills 文件数与源侧不一致（期望 ${SKILL_FILES}）"
+ok "五个托管目标齐备，skills $SKILL_DIRS 目录 / $SKILL_FILES 文件"
 
 step "T2.1b .chezmoiignore：仓库自有文件不得落到目标目录"
 for f in README.md CHANGELOG.md HANDOFF.md mcp-deps.yaml tests tools legacy .github PROBES.md VERIFY.md; do
@@ -167,10 +174,7 @@ for dirpath, dirnames, filenames in os.walk(dst_skills):
 if missing or mismatch or extra:
     print("缺失:", missing[:5], "内容不符:", mismatch[:5], "多余/未解码:", extra[:5])
     sys.exit(1)
-if len(expected) != 191:
-    print("期望 191 个技能文件，实际", len(expected))
-    sys.exit(1)
-print("191 个技能文件逐字节一致，dot_ 编码已正确还原")
+print("%d 个技能文件逐字节一致，dot_ 编码已正确还原（计数断言由 shell 侧动态把关）" % len(expected))
 PY
 ok "skills 逐字节一致"
 
@@ -259,21 +263,21 @@ fi
 n_dirs=$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
 n_files=$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')
 echo "   障碍存在时：目录 $n_dirs / 文件 $n_files"
-[ "$n_dirs" = "40" ] || fail "失败后 skills 目录树被破坏（目录数 ${n_dirs}）"
-[ "$n_files" = "191" ] || fail "失败后 skills 被清空或半套（文件数 ${n_files}）"
+[ "$n_dirs" = "$SKILL_DIRS" ] || fail "失败后 skills 目录树被破坏（目录数 ${n_dirs}，期望 ${SKILL_DIRS}）"
+[ "$n_files" = "$SKILL_FILES" ] || fail "失败后 skills 被清空或半套（文件数 ${n_files}，期望 ${SKILL_FILES}）"
 chmod 644 "$OBSTACLE" 2>/dev/null || true
 c apply --exclude=scripts
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "障碍清除后未恢复 191 个技能文件"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "$SKILL_FILES" ] || fail "障碍清除后未恢复全部技能文件（期望 ${SKILL_FILES}）"
 if c diff --exclude=scripts | grep -q .; then c diff --exclude=scripts; fail "障碍清除后 diff 仍非空"; fi
 grep -q 'tampered' "$OBSTACLE" && fail "被篡改的技能文件未恢复为仓库内容"
-ok "R3 通过：失败时技能树保持 40 目录 / 191 文件，障碍清除后完全恢复"
+ok "R3 通过：失败时技能树保持 $SKILL_DIRS 目录 / $SKILL_FILES 文件，障碍清除后完全恢复"
 
 step "R3b 局部缺失可收敛（模拟上一次中断留下的半套状态）"
 rm -f "$DEST/.zcode/skills/humanizer/SKILL.md" \
       "$DEST/.zcode/skills/doc-coauthoring/SKILL.md" \
       "$DEST/.zcode/skills/pdf/SKILL.md" 2>/dev/null || true
 c apply --exclude=scripts
-[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "191" ] || fail "局部缺失未被补齐"
+[ "$(find "$DEST/.zcode/skills" -type f | wc -l | tr -d ' ')" = "$SKILL_FILES" ] || fail "局部缺失未被补齐（期望 ${SKILL_FILES}）"
 if c diff --exclude=scripts | grep -q .; then fail "补齐后 diff 非空"; fi
 ok "R3b 通过：删除部分技能后 apply 收敛一致"
 
