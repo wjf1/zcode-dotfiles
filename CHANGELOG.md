@@ -16,6 +16,16 @@
 
 - **`config.json` 损坏时 apply 会失败**：Go 模板无 try/catch，目标文件为非法 JSON 或顶层不是对象时 apply 快速失败并给出明确报错——相对旧版"留档 `.broken-backup` 后按空对象合并"是**有意降级**；请先修复或删除该文件再 apply（README「已知限制」同步声明）。
 
+## v2.3.0 — 2026-10-26
+
+### 变更
+
+- **合并脚本保留 per-machine `enabled` 开关（P1-1）**：`merge()` 对模板声明的 MCP 条目从"整体覆盖"改为"覆盖但继承运行态开关"——目标机已有条目的 `enabled` / `enable` 布尔值会被继承（schema 用 `enabled`，设置页实测可能写 `enable`，两者都认）。用户在 ZCode 设置页禁用的 server 不再被 `chezmoi apply` 静默还原；条目内 command / args / timeoutMs / type 仍以模板为准。验收新增 R1b 用例（改 `enabled:false` + 篡改 command 后 re-apply，断言开关保留、其余字段恢复模板值、其余 server 不受影响），README 双语同步说明。
+- **插件安装改由 `zcode plugins install` 幂等执行（P1-2）**：两个 run_once 脚本在渲染产物自检后新增插件安装段——先 `zcode plugins list --json` 查询、已装即跳过（幂等）；未装则 `zcode plugins install github@zcode-plugins-official --scope user`；`zcode` CLI 缺失 / 子命令不支持 / 网络失败一律只输出 `[plugins] WARN`，**绝不非零退出**阻塞部署。`ZCODE_TEST_NO_SIDE_EFFECTS=1` 时整段跳过（验收沙箱输出 `[plugins] SKIP test-mode`，绝不真实安装插件）。`installed_plugins.json.tmpl` 保留为无 CLI 环境的兜底。验收对 .sh 主体、Windows 早退分支、.ps1、跨平台调度（真实 apply）四处全部注入测试模式变量并断言 SKIP。
+- **adopt 工具识别软链 / junction 并实体化（P1-3）**：ZCode 3.16 起设置页技能导入默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，`exact_` 语义会在下次 apply 删除它们。adopt 助手现在能识别链接（sh 用 `[ -L ]` / ps1 用 `LinkType` 判定 `SymbolicLink` / `Junction`），列表输出 `unmanaged (symlink -> <target>)`；`--add` 对链接**不再 `chezmoi add`**（会把链接语义带进 source），改为实体化复制为普通目录（sh `cp -R`，ps1 `Get-ChildItem -Force | Copy-Item -Recurse`，均含点号目录），输出 `materialized -> ...`。两个脚本末尾新增行为提示；README 双语 §6 新增「ZCode 设置页技能导入」小节（导入 → 立即 adopt；要跟随上游则走 `npx skills` + adopt，并说明两种方式代价）。
+- **验收计数断言参数化，去掉 40 / 191 硬编码**：`tests/acceptance.sh` 顶部按源侧 `dot_zcode/exact_skills` 的实际目录 / 文件数生成 `SKILL_DIRS` / `SKILL_FILES`（源与目标 1:1 映射，`dot_` / `literal_` 只改前缀不改数量，故直接以源侧为准），T2.1、R3、R3b 的计数断言全部改引动态值并在脚本开头输出实际计数；R2b 内联 Python 中冗余的 191 硬编码断言删除（集合比对已覆盖计数语义）。此后技能增删不再需要手改验收脚本。
+- **README 新增「当你在 ZCode 设置页改了东西」+ 文档收口**：README 双语 §5 新增四类 UI 操作对照表（MCP 启停开关**保留**、command / args 修改**还原**、设置页技能导入**被删需先 adopt 实体化**、插件安装记录按模板对齐），把「UI 操作与 apply 的冲突边界」讲清；`HANDOFF.md` 版本状态与待办同步收口（T5 已替代 installPath 观察项、T3 已覆盖版本漂移、新增发布动作待办清单）；`VERIFY.md` 增补 2026-10-26 批次验收实录（T1–T7、T10 的命令 + 关键行 + 退出码 + 诚实声明）。
+
 ## v2.2.0 — 2026-10-26
 
 ### 变更
@@ -23,11 +33,6 @@
 - **MCP server 条目补显式 `"type": "stdio"`（P0-1）**：`modify_config.json.py.tmpl` 的 5 个声明条目（context7、sequential-thinking、chrome-devtools、zcode-token-usage-statusbar、codebase-memory-mcp）全部在对象首键显式声明传输类型，符合 ZCode ≥3.16 的配置规范，不再依赖"缺 type 自动归一化"的兼容逻辑；刻意**不加** `enabled` 字段（默认值语义归 T4/后续版本处理，避免 apply 强行重新启用用户在设置页手动禁用的 server）。验收脚本 R1 断言同步新增"四个无条件渲染的 server 必须带 `type: stdio`"检查。
 - **文档补齐 ZCode 新版边界（P0-2）**：README 中英双语 §4 补明「ZCode ≥3.16 起个人模型配置独立存放于 `~/.zcode/v2/provider_config.json`（含明文 API Key），本仓库**不纳管该文件与整个 `~/.zcode/v2/` 目录**，模型与供应商在本机自行配置」，消除"该不该同步 `~/.zcode/v2/`"的模糊地带；`dot_zcode/AGENTS.md` 工具调用避坑章节在代理条目后补「ZCode 运行时网络走自己的配置」（`network.httpProxy` / `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY` / `ZCODE_AGENT_CA_CERT`，不继承系统代理，勿把系统代理结论直接套到 ZCode 上）。
 - **漂移检查升级为"名字 + 锁定版本"双向校验（P2-2）**：验收脚本的 `mcp-deps.yaml ↔ 模板` 漂移检查从"只查名字出现"升级为**版本级双向比对**——yaml 登记的每个锁定版本（`pkg@x.y.z`，含 `@scope/pkg@x.y.z`）必须被模板渲染，模板中出现的版本也必须登记在 yaml；断言失败时列出差异项，可直接定位漏改处。升级一个 MCP 不再是"改三处、查一处"。
-- **合并脚本保留 per-machine `enabled` 开关（P1-1）**：`merge()` 对模板声明的 MCP 条目从"整体覆盖"改为"覆盖但继承运行态开关"——目标机已有条目的 `enabled` / `enable` 布尔值会被继承（schema 用 `enabled`，设置页实测可能写 `enable`，两者都认）。用户在 ZCode 设置页禁用的 server 不再被 `chezmoi apply` 静默还原；条目内 command / args / timeoutMs / type 仍以模板为准。验收新增 R1b 用例（改 `enabled:false` + 篡改 command 后 re-apply，断言开关保留、其余字段恢复模板值、其余 server 不受影响），README 双语同步说明。
-- **插件安装改由 `zcode plugins install` 幂等执行（P1-2）**：两个 run_once 脚本在渲染产物自检后新增插件安装段——先 `zcode plugins list --json` 查询、已装即跳过（幂等）；未装则 `zcode plugins install github@zcode-plugins-official --scope user`；`zcode` CLI 缺失 / 子命令不支持 / 网络失败一律只输出 `[plugins] WARN`，**绝不非零退出**阻塞部署。`ZCODE_TEST_NO_SIDE_EFFECTS=1` 时整段跳过（验收沙箱输出 `[plugins] SKIP test-mode`，绝不真实安装插件）。`installed_plugins.json.tmpl` 保留为无 CLI 环境的兜底。验收对 .sh 主体、Windows 早退分支、.ps1、跨平台调度（真实 apply）四处全部注入测试模式变量并断言 SKIP。
-- **adopt 工具识别软链 / junction 并实体化（P1-3）**：ZCode 3.16 起设置页技能导入默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，`exact_` 语义会在下次 apply 删除它们。adopt 助手现在能识别链接（sh 用 `[ -L ]` / ps1 用 `LinkType` 判定 `SymbolicLink` / `Junction`），列表输出 `unmanaged (symlink -> <target>)`；`--add` 对链接**不再 `chezmoi add`**（会把链接语义带进 source），改为实体化复制为普通目录（sh `cp -R`，ps1 `Get-ChildItem -Force | Copy-Item -Recurse`，均含点号目录），输出 `materialized -> ...`。两个脚本末尾新增行为提示；README 双语 §6 新增「ZCode 设置页技能导入」小节（导入 → 立即 adopt；要跟随上游则走 `npx skills` + adopt，并说明两种方式代价）。
-- **验收计数断言参数化，去掉 40 / 191 硬编码**：`tests/acceptance.sh` 顶部按源侧 `dot_zcode/exact_skills` 的实际目录 / 文件数生成 `SKILL_DIRS` / `SKILL_FILES`（源与目标 1:1 映射，`dot_` / `literal_` 只改前缀不改数量，故直接以源侧为准），T2.1、R3、R3b 的计数断言全部改引动态值并在脚本开头输出实际计数；R2b 内联 Python 中冗余的 191 硬编码断言删除（集合比对已覆盖计数语义）。此后技能增删不再需要手改验收脚本。
-- **README 新增「当你在 ZCode 设置页改了东西」+ 文档收口**：README 双语 §5 新增四类 UI 操作对照表（MCP 启停开关**保留**、command / args 修改**还原**、设置页技能导入**被删需先 adopt 实体化**、插件安装记录按模板对齐），把「UI 操作与 apply 的冲突边界」讲清；`HANDOFF.md` 版本状态与待办同步收口（T5 已替代 installPath 观察项、T3 已覆盖版本漂移、新增发布动作待办清单）；`VERIFY.md` 增补 2026-10-26 批次验收实录（T1–T7、T10 的命令 + 关键行 + 退出码 + 诚实声明）。
 
 ## v2.1.3 — 2026-10-12
 

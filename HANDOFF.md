@@ -102,6 +102,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 7. **本批次（v2.2.0 / v2.3.0）的发布动作——需人工确认后才执行**：本地 `main` 已全部就绪且验收 PASS。确认后依次执行：
    - `git tag -a v2.2.0 -m "v2.2.0: MCP 条目显式传输类型、文档边界与版本级漂移检查"`
    - `git tag -a v2.3.0 -m "v2.3.0: 设置页开关继承、CLI 幂等插件安装与 adopt 链接实体化"`
+   - `git tag -a v2.4.0 -m "v2.4.0: config.json 合并去 Python 化（chezmoi modify-template 灰度）"`
    - `git push origin main --tags`
    - 核验/创建两个 GitHub Release，标题与上述 tag 注释逐字一致，正文与 CHANGELOG 对应版本段落对齐。
    真机走查建议：一台装有 ZCode ≥3.16 的机器重跑 run_once 观察 `[plugins]` 行为；设置页改一次 MCP 开关 → `chezmoi apply` → 重开设置页确认开关仍在。
