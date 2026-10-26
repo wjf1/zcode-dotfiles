@@ -9,7 +9,7 @@
 
 # 用户默认指令（User AGENTS.md）
 
-> **全文优先级索引**（按使用频率）：① 环境硬约束（Bash 命令硬约束 / 工具调用避坑）→ ② 行为与验收规范（输出语言 / 服务启停确认 / 任务清单同步 / Token 效率 / Subagent 派发 / 前端 DOM 变更验收）→ ③ 发布与协作流程（代码变更发布 / GitHub Release / README / HANDOFF / 技能安装）→ ④ 专用环境（Command Code 代理）。
+> **全文优先级索引**（按使用频率）：① 环境硬约束（Bash 命令硬约束 / 工具调用避坑）→ ② 行为与验收规范（输出语言 / 服务启停确认 / 任务清单同步 / Token 效率 / Subagent 派发 / 前端 DOM 变更验收）→ ③ 发布与协作流程（代码变更发布 / GitHub Release / README / 仓库门面 / HANDOFF / 技能安装）→ ④ 专用环境（Command Code 代理）。
 
 ## 输出语言规则（所有任务强制生效）
 - **会话内所有由模型生成的自然语言内容一律使用简体中文**，包括但不限于：**思考 / 推理过程**、**任务标题、待办（todo）内容**、**任务清单**（TodoWrite 的 `content`、任务卡片标题、进度描述）、中间状态说明、实施计划、阶段小结、**最终回复**。这些内容 ZCode 客户端会原样透传显示，不做翻译，写英文就会直接以英文出现在界面上。
@@ -82,6 +82,21 @@
 - README 的**同步更新与推送阻塞门禁**统一由「代码变更发布流程」的四文档核验承接，本节只规定 README 自身的内容要求，不再重复推送表述。任何涉及功能新增、界面重构、配置变更或架构调整的提交，README 应在同一分支中同步修订并随代码一同提交。
 - 所有 GitHub 仓库强制维护**中英双语版 README**，并结合配图对项目功能、使用方式进行可视化说明；仅有单语 README 的存量仓库，应在下一次功能迭代时补齐双语版（增量演进，不追溯重写）。
 - 当代码版本迭代、功能发生变更后，README 必须**同步修订与润色**，确保描述、配图信息与仓库当前实际能力匹配，彻底杜绝文档脱节。
+
+## GitHub 仓库门面规范（所有公开仓库强制生效）
+
+背景：2026-10-26 全量巡检发现 13 个公开仓库中 2 个缺描述、5 个缺 topics、4 个缺 LICENSE、描述语言中/英混杂——仓库级元数据决定搜索结果、个人主页与 awesome 列表里的第一印象，与 README 正文同等重要。本节由该次巡检批量整改后固化。
+
+- **新仓库创建即配齐「门面五件套」，缺一不视为交付完成**：
+  1. **description**：`中文一句话 · English one-liner` 双语格式（参照 `zcode-remote-app`），控制在 ~100 字符避免列表页截断；
+  2. **topics**：5~10 个、全小写，覆盖「生态词」（如 `zcode` / `dsh` / `codebuddy`）+「功能词」（如 `api-gateway` / `dotfiles`）+「语言/平台词」；
+  3. **LICENSE**：默认 MIT，版权行统一 `Copyright (c) <年份> wjf1`；
+  4. **README**：中英双语，骨架为「居中徽章行 → 一句话定位（首屏 ≤3 行）→ 截图/GIF 演示 → ✨ 功能特性 → 🚀 快速开始（三步内跑通）→ ⚙️ 配置表 → FAQ → License」；
+  5. **homepage**：有 GitHub Pages / 在线 demo 时必设（`gh repo edit <repo> --homepage`）。
+- **元数据用 `gh` 维护，不占用四文档门禁**：description / topics / homepage 用 `gh repo edit`，LICENSE 用 `gh api -X PUT repos/<owner>/<repo>/contents/LICENSE` 直接提交，无需走 CHANGELOG / tag 流程。
+- **README 必须有实拍截图或 GIF**：无图仓库在交付 / 巡检时视为门面未完成；截图存 `docs/` 或 `assets/` 目录后在 README 引用，不要外链易失效的图床。
+- **Pinned 置顶与 Social Preview 只能网页端手动设置**：Social Preview 图尺寸 1280×640，位于仓库 Settings → General → Social preview；核心仓库上线时务必配图。个人主页 pinned 保持 4~6 个精选。
+- **Profile README（`wjf1/wjf1`）是个人门面**：新增核心仓库或项目定位变化时，同步更新其「精选项目 / Featured Projects」导航表。
 
 ## 接力开发文档规范（HANDOFF.md，所有项目强制生效）
 - **所有项目强制维护**：每个项目根目录下必须维护统一命名的接力开发文档 **`HANDOFF.md`**（若项目已有规范子目录则置于 `docs/HANDOFF.md` 并于根目录保持链接），用于跨会话、跨 Agent、多人协同开发时实现无缝上下文接力。
