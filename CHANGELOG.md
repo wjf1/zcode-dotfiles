@@ -10,6 +10,7 @@
 - **文档补齐 ZCode 新版边界（P0-2）**：README 中英双语 §4 补明「ZCode ≥3.16 起个人模型配置独立存放于 `~/.zcode/v2/provider_config.json`（含明文 API Key），本仓库**不纳管该文件与整个 `~/.zcode/v2/` 目录**，模型与供应商在本机自行配置」，消除"该不该同步 `~/.zcode/v2/`"的模糊地带；`dot_zcode/AGENTS.md` 工具调用避坑章节在代理条目后补「ZCode 运行时网络走自己的配置」（`network.httpProxy` / `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY` / `ZCODE_AGENT_CA_CERT`，不继承系统代理，勿把系统代理结论直接套到 ZCode 上）。
 - **漂移检查升级为"名字 + 锁定版本"双向校验（P2-2）**：验收脚本的 `mcp-deps.yaml ↔ 模板` 漂移检查从"只查名字出现"升级为**版本级双向比对**——yaml 登记的每个锁定版本（`pkg@x.y.z`，含 `@scope/pkg@x.y.z`）必须被模板渲染，模板中出现的版本也必须登记在 yaml；断言失败时列出差异项，可直接定位漏改处。升级一个 MCP 不再是"改三处、查一处"。
 - **合并脚本保留 per-machine `enabled` 开关（P1-1）**：`merge()` 对模板声明的 MCP 条目从"整体覆盖"改为"覆盖但继承运行态开关"——目标机已有条目的 `enabled` / `enable` 布尔值会被继承（schema 用 `enabled`，设置页实测可能写 `enable`，两者都认）。用户在 ZCode 设置页禁用的 server 不再被 `chezmoi apply` 静默还原；条目内 command / args / timeoutMs / type 仍以模板为准。验收新增 R1b 用例（改 `enabled:false` + 篡改 command 后 re-apply，断言开关保留、其余字段恢复模板值、其余 server 不受影响），README 双语同步说明。
+- **插件安装改由 `zcode plugins install` 幂等执行（P1-2）**：两个 run_once 脚本在渲染产物自检后新增插件安装段——先 `zcode plugins list --json` 查询、已装即跳过（幂等）；未装则 `zcode plugins install github@zcode-plugins-official --scope user`；`zcode` CLI 缺失 / 子命令不支持 / 网络失败一律只输出 `[plugins] WARN`，**绝不非零退出**阻塞部署。`ZCODE_TEST_NO_SIDE_EFFECTS=1` 时整段跳过（验收沙箱输出 `[plugins] SKIP test-mode`，绝不真实安装插件）。`installed_plugins.json.tmpl` 保留为无 CLI 环境的兜底。验收对 .sh 主体、Windows 早退分支、.ps1、跨平台调度（真实 apply）四处全部注入测试模式变量并断言 SKIP。
 
 ## v2.1.3 — 2026-10-12
 

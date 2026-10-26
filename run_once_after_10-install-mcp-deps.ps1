@@ -57,4 +57,23 @@ if (Test-Path $cfgPath) {
   Write-Warning "[mcp-check] 未找到 $cfgPath，渲染产物自检未执行"
 }
 
+# ---- 插件安装：优先用 zcode CLI 幂等执行（非致命；测试模式整段跳过）----
+if ($env:ZCODE_TEST_NO_SIDE_EFFECTS -eq "1") {
+  Write-Host "[plugins] SKIP test-mode"
+} elseif (Test-CommandExists "zcode") {
+  $listed = (& zcode plugins list --json 2>$null) -join "`n"
+  if ($listed -match '"github@zcode-plugins-official"') {
+    Write-Host "[plugins] OK   github@zcode-plugins-official 已安装"
+  } else {
+    & zcode plugins install github@zcode-plugins-official --scope user *> $null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host "[plugins] OK   已安装 github@zcode-plugins-official"
+    } else {
+      Write-Host "[plugins] WARN 自动安装失败；请到 Settings -> Plugin Management 手动点一次安装"
+    }
+  }
+} else {
+  Write-Host "[plugins] WARN 未找到 zcode CLI；已按 installed_plugins.json 同步安装记录，请在 ZCode 内点一次安装"
+}
+
 Write-Host "== 检测结束：以上 WARN 项按 mcp-deps.yaml 处理；若你重新克隆了状态栏仓库，重启 ZCode 即可生效 =="

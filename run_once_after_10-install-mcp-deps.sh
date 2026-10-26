@@ -57,4 +57,21 @@ else
   echo "[mcp-check] WARN 未找到 ${CFG}，渲染产物自检未执行"
 fi
 
+# ---- 插件安装：优先用 zcode CLI 幂等执行（非致命；测试模式整段跳过）----
+# ZCode 是否信任 installed_plugins.json 的 installPath 未定（HANDOFF 待办 2），
+# 因此不再只靠同步记录：有 zcode CLI 就让 ZCode 自己装；任何失败只 WARN，不阻塞部署。
+if [ "${ZCODE_TEST_NO_SIDE_EFFECTS:-}" = "1" ]; then
+  echo "[plugins] SKIP test-mode"
+elif command -v zcode >/dev/null 2>&1; then
+  if zcode plugins list --json 2>/dev/null | grep -q '"github@zcode-plugins-official"'; then
+    echo "[plugins] OK   github@zcode-plugins-official 已安装"
+  elif zcode plugins install github@zcode-plugins-official --scope user >/dev/null 2>&1; then
+    echo "[plugins] OK   已安装 github@zcode-plugins-official"
+  else
+    echo "[plugins] WARN 自动安装失败；请到 Settings → Plugin Management 手动点一次安装"
+  fi
+else
+  echo "[plugins] WARN 未找到 zcode CLI；已按 installed_plugins.json 同步安装记录，请在 ZCode 内点一次安装"
+fi
+
 echo "== 检测结束：以上 WARN 项按 mcp-deps.yaml 处理；若你重新克隆了状态栏仓库，重启 ZCode 即可生效 =="

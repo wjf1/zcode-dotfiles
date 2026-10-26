@@ -413,26 +413,29 @@ EOF
 # 断言一律用 ASCII 标记：Windows PowerShell 5.1 的输出走系统代码页，中文匹配不可靠。
 # 先绕过 OS 守卫跑 .sh 主体——本机（Windows）默认会早退，若不绕过这段逻辑永远测不到
 # （这正是首轮 CI 里 macOS 才暴露出的那类缺口）。
-out_body=$(HOME="$FAKEHOME" ZCODE_SKIP_OS_GUARD=1 sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
+out_body=$(HOME="$FAKEHOME" ZCODE_SKIP_OS_GUARD=1 ZCODE_TEST_NO_SIDE_EFFECTS=1 sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
 echo "$out_body" | grep -q 'mcp-check' || fail ".sh 主体渲染自检未输出：$out_body"
 echo "$out_body" | grep -qi 'definitely-not-a-real-command-xyz' || fail ".sh 主体未检出缺失命令"
+echo "$out_body" | grep -q '\[plugins\] SKIP test-mode' || fail ".sh 主体未按测试模式跳过插件安装：$out_body"
 ok ".sh 主体渲染自检能检出缺失命令（已绕过 OS 守卫）"
 
 if [ "$IS_WINDOWS" = 1 ]; then
   # Windows：不绕守卫时 .sh 应自身早退；.ps1 应真正执行自检
-  out_sh=$(HOME="$FAKEHOME" sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
+  out_sh=$(HOME="$FAKEHOME" ZCODE_TEST_NO_SIDE_EFFECTS=1 sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
   echo "$out_sh" | grep -q 'skipped-by-unix-script' || fail ".sh 在 Windows 未按预期早退：$out_sh"
   ok ".sh 在 Windows 正确早退"
-  out_ps=$(USERPROFILE="$FAKEHOME" powershell -NoProfile -ExecutionPolicy Bypass -File "$ROOT/run_once_after_10-install-mcp-deps.ps1" 2>&1 || true)
+  out_ps=$(USERPROFILE="$FAKEHOME" ZCODE_TEST_NO_SIDE_EFFECTS=1 powershell -NoProfile -ExecutionPolicy Bypass -File "$ROOT/run_once_after_10-install-mcp-deps.ps1" 2>&1 || true)
   echo "$out_ps" | grep -q 'platform=windows' || fail ".ps1 未按预期运行：$out_ps"
   echo "$out_ps" | grep -q 'mcp-check' || fail ".ps1 渲染自检未输出：$out_ps"
   echo "$out_ps" | grep -qi 'definitely-not-a-real-command-xyz' || fail ".ps1 未检出缺失命令"
+  echo "$out_ps" | grep -q '\[plugins\] SKIP test-mode' || fail ".ps1 未按测试模式跳过插件安装：$out_ps"
   ok ".ps1 渲染自检能检出缺失命令"
 else
-  out_sh=$(HOME="$FAKEHOME" sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
+  out_sh=$(HOME="$FAKEHOME" ZCODE_TEST_NO_SIDE_EFFECTS=1 sh "$ROOT/run_once_after_10-install-mcp-deps.sh" 2>&1 || true)
   echo "$out_sh" | grep -q 'platform=unix' || fail ".sh 未按预期运行：$out_sh"
   echo "$out_sh" | grep -q 'mcp-check' || fail ".sh 渲染自检未输出：$out_sh"
   echo "$out_sh" | grep -qi 'definitely-not-a-real-command-xyz' || fail ".sh 未检出缺失命令"
+  echo "$out_sh" | grep -q '\[plugins\] SKIP test-mode' || fail ".sh 未按测试模式跳过插件安装：$out_sh"
   ok ".sh 渲染自检能检出缺失命令"
 fi
 
@@ -441,7 +444,9 @@ step "run_once 跨平台调度：只执行本平台脚本"
 DEST2="$WORK/dest-scripts"
 mkdir -p "$DEST2"
 DEST2_W=$(winpath "$DEST2")
-out=$(chezmoi -c "$CFG_W" -S "$ROOT_W" -D "$DEST2_W" --persistent-state "$(winpath "$WORK/state2.boltdb")" --no-tty --force apply 2>&1 || true)
+# ZCODE_TEST_NO_SIDE_EFFECTS=1：apply 会真实执行本平台 run_once，插件安装段必须按测试模式跳过，
+# 验收沙箱绝不真实安装插件（只断言平台标记与 SKIP）。
+out=$(ZCODE_TEST_NO_SIDE_EFFECTS=1 chezmoi -c "$CFG_W" -S "$ROOT_W" -D "$DEST2_W" --persistent-state "$(winpath "$WORK/state2.boltdb")" --no-tty --force apply 2>&1 || true)
 echo "$out" | sed 's/^/   /'
 # 断言用 ASCII 平台标记（PowerShell 5.1 的输出走系统代码页，中文匹配不可靠）
 if [ "$IS_WINDOWS" = 1 ]; then

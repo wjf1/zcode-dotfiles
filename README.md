@@ -43,7 +43,7 @@ powershell -ExecutionPolicy Bypass -c "iwr -useb https://get.chezmoi.io | iex; c
 3. **补装缺失依赖**：按 `run_once` 输出的 WARN 清单处理，逐项对照 [`mcp-deps.yaml`](mcp-deps.yaml)。
 4. **token 用量状态栏 MCP**：脚本本体是独立仓库，不随本仓库同步。缺失时执行
    `sh tools/install-statusbar.sh`（Windows：`powershell -File tools\install-statusbar.ps1`）。
-5. **插件**：`github` / `mimosa` 的来源与版本已同步，在 Settings → Plugin Management 中可见，点一次安装即可；插件缓存本体由 ZCode 自行下载。
+5. **插件**：两路保障——有 `zcode` CLI 时 `run_once` 会自动执行 `zcode plugins install github@zcode-plugins-official --scope user`（幂等：已装即跳过；CLI 缺失、子命令不支持或网络失败仅 WARN，不阻塞部署）；无 CLI 时按 `installed_plugins.json` 的同步记录在 Settings → Plugin Management 中点一次安装即可。插件缓存本体由 ZCode 自行下载。
 6. **codebase-memory-mcp 属红色级**：仅 Windows 且路径非空时渲染。其他平台请用替代方案（如 `memory-server`、`mem0-mcp`）。
 
 ### 3. 目录结构
@@ -183,7 +183,7 @@ The first run installs chezmoi, clones into `~/.local/share/chezmoi`, asks two m
 2. **Sign in again**: OAuth tokens, API keys, sessions, logs and the plugin cache are deliberately **not** synced (layer L4).
 3. **Install missing dependencies** listed by the `run_once` output — cross-check with [`mcp-deps.yaml`](mcp-deps.yaml).
 4. **Token usage statusbar MCP**: its script lives in a separate repository. Run `sh tools/install-statusbar.sh` (`powershell -File tools\install-statusbar.ps1` on Windows) if missing.
-5. **Plugins**: sources and versions for `github` / `mimosa` are synced and show up in Settings → Plugin Management; one click reinstalls them. The plugin cache itself is downloaded by ZCode.
+5. **Plugins**: two paths — with the `zcode` CLI available, `run_once` runs `zcode plugins install github@zcode-plugins-official --scope user` automatically (idempotent: skipped when already installed; a missing CLI, unsupported subcommand or network failure only WARNs and never blocks deployment); without the CLI, the synced record in `installed_plugins.json` shows up in Settings → Plugin Management and one click reinstalls them. The plugin cache itself is downloaded by ZCode.
 6. **`codebase-memory-mcp` is red-tier**: rendered only on Windows with a non-empty path. Other platforms should use an alternative such as `memory-server` or `mem0-mcp`.
 
 ### 3. Layout
