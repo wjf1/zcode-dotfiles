@@ -7,6 +7,7 @@
 ### 变更
 
 - **MCP server 条目补显式 `"type": "stdio"`（P0-1）**：`modify_config.json.py.tmpl` 的 5 个声明条目（context7、sequential-thinking、chrome-devtools、zcode-token-usage-statusbar、codebase-memory-mcp）全部在对象首键显式声明传输类型，符合 ZCode ≥3.16 的配置规范，不再依赖"缺 type 自动归一化"的兼容逻辑；刻意**不加** `enabled` 字段（默认值语义归 T4/后续版本处理，避免 apply 强行重新启用用户在设置页手动禁用的 server）。验收脚本 R1 断言同步新增"四个无条件渲染的 server 必须带 `type: stdio`"检查。
+- **文档补齐 ZCode 新版边界（P0-2）**：README 中英双语 §4 补明「ZCode ≥3.16 起个人模型配置独立存放于 `~/.zcode/v2/provider_config.json`（含明文 API Key），本仓库**不纳管该文件与整个 `~/.zcode/v2/` 目录**，模型与供应商在本机自行配置」，消除"该不该同步 `~/.zcode/v2/`"的模糊地带；`dot_zcode/AGENTS.md` 工具调用避坑章节在代理条目后补「ZCode 运行时网络走自己的配置」（`network.httpProxy` / `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY` / `ZCODE_AGENT_CA_CERT`，不继承系统代理，勿把系统代理结论直接套到 ZCode 上）。
 
 ## v2.1.3 — 2026-10-12
 

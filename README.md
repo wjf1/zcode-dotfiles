@@ -79,6 +79,8 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 | L3 机器依赖 | 5 个 MCP 的外部可执行文件 | `mcp-deps.yaml` | `run_once` 检测 + 指引 |
 | L4 凭证与缓存 | OAuth token、API 密钥、会话、日志、插件缓存 | **刻意不同步** | 部署后手动登录 / 由 ZCode 自行下载 |
 
+ZCode ≥3.16 起个人模型配置独立存放于 `~/.zcode/v2/provider_config.json`，其中含明文 API Key。本仓库**不纳管该文件与整个 `~/.zcode/v2/` 目录**；模型与供应商请在本机自行配置。
+
 MCP 分级：`context7`、`sequential-thinking`、`chrome-devtools` 为黄色（需 Node.js/npx，**版本已锁定**）；`zcode-token-usage-statusbar` 绿色；`codebase-memory-mcp` 红色（仅 Windows）。
 
 ### 5. 日常使用与回写矩阵 ⚠️
@@ -194,6 +196,8 @@ The repository root *is* the chezmoi source state: `dot_zcode/` maps to `~/.zcod
 | L2 path-dependent | `cli/config.json`, `cli/plugins/installed_plugins.json` | Go template | rendered per OS and per `homeDir` |
 | L3 machine deps | the 5 MCP executables | `mcp-deps.yaml` | detected by `run_once`, with guidance |
 | L4 credentials & cache | OAuth tokens, API keys, sessions, logs, plugin cache | **not synced** | sign in again / let ZCode re-download |
+
+Since ZCode ≥3.16, personal model configuration lives separately in `~/.zcode/v2/provider_config.json`, which contains plaintext API keys. This repo deliberately does **not** manage that file or the whole `~/.zcode/v2/` directory; configure models and providers locally on each machine.
 
 MCP tiers: `context7`, `sequential-thinking` and `chrome-devtools` are yellow (need Node.js/npx, **with pinned versions**); `zcode-token-usage-statusbar` is green; `codebase-memory-mcp` is red (Windows only).
 

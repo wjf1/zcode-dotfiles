@@ -115,6 +115,7 @@
 - **MCP 工具往会话工作区写文件会被拒**：chrome-devtools 截图传 `filePath` 会报 `Access denied: ... is not within any of the configured workspace roots`——连工作目录本身也被拒。做法是**不传 `filePath`**，让工具把产物落到 artifacts 目录并返回绝对路径，再用 `cp` 搬到目标位置。
 - **大图不要在会话里读**：超过 200KiB 的 MCP 图片不会内联，`Read` 只能拿到被截断的 `data:image/...;base64,` 前缀，无法判读内容。视觉验收改用**可编程断言**（`getComputedStyle` / `getBoundingClientRect` / 元素数量与文本），截图只作留档产物，不作为判读依据。
 - **CLI 与 npm 不读 Windows 系统代理**：浏览器能打开 github.com 不代表 git / curl / npm 能——它们只看自己的配置和环境变量。本机 git 侧已固化 `http.proxy = http://127.0.0.1:7900`（2026-10-06 随 Clash Verge 混合端口变更从 7897 改为 7900），另有用户级 `NO_PROXY=localhost,127.0.0.1,::1`（无 HTTP_PROXY/HTTPS_PROXY 持久化）；该端口会漂移，以实际监听为准。npm 不读系统代理，需单独 `npm config set proxy` / `https-proxy`，否则 `npx` 拉包超时。**已知坑**：`chezmoi init` 克隆仓库时会把系统代理解析成 `http://127.0.0.1`（丢失端口）导致失败，需改用 `git clone` 先手动克隆到源目录，再 `chezmoi init`（源目录已是 git 仓库时跳过克隆）。代理异常或未启动时用 `git -c http.proxy= <cmd>` 临时直连。
+- **ZCode 运行时网络走自己的配置**：ZCode 支持 `network.httpProxy` / `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY` / `ZCODE_AGENT_CA_CERT`，不继承系统代理。判断 ZCode 内网络问题时先看这几个变量，不要把系统代理的结论直接套到 ZCode 上。
 - **单条命令的输出保持克制**：整段 `cat` 大文件、base64 图片这类大 payload，与日志里唯一的告警 `dropped buffered outbound payloads`（当天 24 次）在时间上聚集，疑似相关。大文件只取关键片段。
 
 ## 前端 DOM 变更验收规范（所有含 Web 前端的项目强制生效）
