@@ -269,11 +269,12 @@ PY
 ok "R5 通过"
 
 # ---------- 漂移检查 ----------
-step "漂移检查：mcp-deps.yaml ↔ 模板 ↔ run_once 脚本"
+step "漂移检查：mcp-deps.yaml ↔ 模板 ↔ run_once 脚本（名字 + 锁定版本双向）"
 py - "$ROOT" <<'PY'
 import re, sys, os, glob
 root = sys.argv[1]
-names = re.findall(r'^\s*-\s*name:\s*(\S+)', open(os.path.join(root, "mcp-deps.yaml"), encoding="utf-8").read(), re.M)
+yaml_text = open(os.path.join(root, "mcp-deps.yaml"), encoding="utf-8").read()
+names = re.findall(r'^\s*-\s*name:\s*(\S+)', yaml_text, re.M)
 assert names, "mcp-deps.yaml 未解析到任何 server"
 tpl = open(glob.glob(os.path.join(root, "dot_zcode/cli/modify_config.json*.tmpl"))[0], encoding="utf-8").read()
 sh = open(os.path.join(root, "run_once_after_10-install-mcp-deps.sh"), encoding="utf-8").read()
@@ -291,7 +292,19 @@ for n in names:
 if problems:
     print("漂移：", problems)
     sys.exit(1)
-print("mcp-deps.yaml ↔ 模板 ↔ 两个 run_once 脚本一致（%d 个 server）" % len(names))
+# —— 版本级双向漂移检查：yaml 登记的锁定版本必须被模板渲染，反之亦然（升级漏改一处即红）——
+ver = re.compile(r'"(@?[\w./-]+@\d[\w.\-]*)"')   # 匹配 "pkg@1.2.3" / "@scope/pkg@1.2.3"
+yaml_versions = set(ver.findall(yaml_text))
+tpl_versions = set(ver.findall(tpl))
+missing_in_tpl = yaml_versions - tpl_versions
+missing_in_yaml = tpl_versions - yaml_versions
+if missing_in_tpl or missing_in_yaml:
+    if missing_in_tpl:
+        print("以下版本只在 mcp-deps.yaml 中声明，模板未渲染：", sorted(missing_in_tpl))
+    if missing_in_yaml:
+        print("以下版本只在模板中出现，未登记到 mcp-deps.yaml：", sorted(missing_in_yaml))
+    sys.exit(1)
+print("mcp-deps.yaml ↔ 模板 ↔ 两个 run_once 脚本一致（%d 个 server，%d 个锁定版本双向一致）" % (len(names), len(yaml_versions)))
 PY
 ok "无漂移"
 
