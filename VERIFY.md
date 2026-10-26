@@ -140,3 +140,38 @@ ACCEPTANCE PASS      # 退出码 0（脚本开头输出 skills: 40 dirs / 191 fi
 2. **adopt 实体化的端到端**：本会话用隔离假源验证语义；真实 `~/.local/share/chezmoi` 源目录上的完整导入 → adopt → apply 链路待真机走查。
 3. **`enabled` 继承的真实 UI 往返**：设置页改开关 → `chezmoi apply` → 重开设置页确认，建议人工走查一次。
 4. **macOS / Linux 真机仍未实测**（沿用上文 2026-10-07 声明，由 CI 三平台矩阵覆盖）。
+
+---
+
+## 2026-10-26（v2.4.0 批次验收：T8 合并逻辑去 Python 化）
+
+- 环境：同上（Windows 10.0.26200 / chezmoi v2.73.0 / Python 3.12.10）。
+
+### Phase A 探测实录（PROBES.md D11）
+
+- 变体 1 `dot_x/config.json`（无 `modify_` 前缀，仅魔法注释）→ 被当普通文件原样部署，模板未执行。
+- 变体 2 `plainy/modify_config.json` → 目标 `plainy/config.json` 内容 `{"a": {"b": "NEW"}}`；预置 `{"a":{"b":"OLD"},"keep":true}` 再 apply → `a.b=NEW` 且 `keep:true` 保留；第二次 apply 树与内容零变化（幂等）；写入 `{broken json` 时 apply 报
+  `error calling fromJson: invalid character 'b' looking for beginning of object key string`（快速失败）。
+
+### 新旧实现等价对比（三组 fixture，JSON 结构相等）
+
+```
+fixture 1: 语义等价 OK     # 空输入（目标不存在）
+fixture 2: 语义等价 OK     # 含自定义 server my-local-server + 顶层 myTopLevel
+fixture 3: 语义等价 OK     # context7 enabled=false + 篡改 command/args/timeoutMs
+三组 fixture 全部语义等价（JSON 结构相等）
+```
+
+### 全量验收
+
+```
+sh tests/acceptance.sh  →  ACCEPTANCE PASS（退出码 0）
+python -c "import json;json.load(open('.test-home/dest/.zcode/cli/config.json'))"  →  产物合法 JSON
+```
+
+R1（自定义 server 保留）、R1b（enabled 继承）、R4（幂等）等核心用例在新实现下全部通过。
+
+### 未覆盖 / 待人工验证
+
+1. **真机灰度**：主力机 `chezmoi apply` 一轮，确认真实 `~/.zcode/cli/config.json` 与语义预期一致；损坏文件场景的人工恢复路径（修复或删除后 apply）未在真机演练。
+2. **chezmoi 升级兼容**：modify-template 依赖的行为在更高版本 chezmoi 上的兼容性未测（当前基线 v2.73.0）。

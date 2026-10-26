@@ -3,7 +3,7 @@
 {{- if eq .chezmoi.os "windows" -}}
 {{-   $defaultPython = joinPath .chezmoi.homeDir "AppData" "Local" "Programs" "Python" "Python312" "python.exe" -}}
 {{- end -}}
-{{- $python := promptStringOnce . "zcodePythonPath" "Python 3 解释器绝对路径（token 用量状态栏 MCP 与 config.json 合并脚本用；直接回车采用默认值）" $defaultPython -}}
+{{- $python := promptStringOnce . "zcodePythonPath" "Python 3 解释器绝对路径（token 用量状态栏 MCP 用；直接回车采用默认值）" $defaultPython -}}
 {{- $defaultMemory := "" -}}
 {{- if eq .chezmoi.os "windows" -}}
 {{-   $defaultMemory = joinPath .chezmoi.homeDir "AppData" "Local" "Programs" "codebase-memory-mcp" "codebase-memory-mcp.exe" -}}
@@ -14,8 +14,9 @@
     zcodePythonPath = {{ $python | quote }}
     zcodeCodebaseMemoryPath = {{ $memory | quote }}
 
-# Windows 上 chezmoi 按文件扩展名选择脚本解释器，且不读 shebang；
-# dot_zcode/cli/modify_config.json.py.tmpl 的目标名依赖 .py 被识别为脚本扩展名，
-# 因此这里显式把 .py 指向上面采集到的解释器（macOS/Linux 走 shebang，此配置无害）。
+# [interpreters.py] 保留为将来可能的 .py 部署脚本兜底：v2.4.0 起 config.json 合并已改由
+# chezmoi:modify-template 实现（dot_zcode/cli/modify_config.json，无 .tmpl 后缀），
+# 仓库当前已无 .py 部署脚本，此配置无害（macOS/Linux 走 shebang）。
+# Python 解释器路径本身仍是 token 用量状态栏 MCP 的必需项（config.json 的 statusbar 条目指向它）。
 [interpreters.py]
     command = {{ $python | quote }}

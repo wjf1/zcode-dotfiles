@@ -55,7 +55,7 @@ for cand in python3 python; do
     break
   fi
 done
-[ -n "$PY" ] || fail "需要可用的 Python 3：config.json 合并脚本与若干断言依赖它"
+[ -n "$PY" ] || fail "需要可用的 Python 3：验收断言依赖它（config.json 合并自 v2.4.0 起已去 Python 化）"
 PY_W=$(winpath "$PY")
 
 # 技能计数以源侧为准（源与目标 1:1 映射，dot_/literal_ 只改前缀不改数量），
@@ -307,7 +307,7 @@ root = sys.argv[1]
 yaml_text = open(os.path.join(root, "mcp-deps.yaml"), encoding="utf-8").read()
 names = re.findall(r'^\s*-\s*name:\s*(\S+)', yaml_text, re.M)
 assert names, "mcp-deps.yaml 未解析到任何 server"
-tpl = open(glob.glob(os.path.join(root, "dot_zcode/cli/modify_config.json*.tmpl"))[0], encoding="utf-8").read()
+tpl = open(os.path.join(root, "dot_zcode/cli/modify_config.json"), encoding="utf-8").read()
 sh = open(os.path.join(root, "run_once_after_10-install-mcp-deps.sh"), encoding="utf-8").read()
 ps = open(os.path.join(root, "run_once_after_10-install-mcp-deps.ps1"), encoding="utf-8").read()
 problems = []

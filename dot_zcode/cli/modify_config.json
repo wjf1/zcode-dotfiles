@@ -1,0 +1,54 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /*
+config.json 深合并（v2.4.0 起由本 modify-template 实现，替代 legacy/modify_config.json.py.tmpl 的 Python 版）。
+stdin = 目标 config.json 当前内容（不存在时为空），stdout = 合并后的新内容。语义对齐 Python 版：
+  1. 模板未声明的顶层键天然保留（从 stdin 出发，只设置声明路径）；
+  2. mcp.servers 中模板声明的条目整对象替换（模板为准）；
+     但目标机已有的 enabled/enable 布尔开关会被继承，避免用户在 ZCode 设置页的禁用被 apply 还原；
+  3. plugins.enabledPlugins 按键设置，其余键保留；
+  4. 目标 config.json 损坏（非法 JSON / 顶层不是对象）时 apply 快速失败——Go 模板无 try/catch，
+     这是对 Python 版"留档后按空对象合并"的有意降级：请先修复或删除该文件再 apply（见 README 已知限制）。
+实现注意：chezmoi 模板为 missingkey=error，但 index 函数对 map 缺失键返回 nil 而不报错，
+因此目标数据一律用 index 导航；模板自有配置键（.zcodePythonPath 等）才用 .field 访问。
+*/ -}}
+{{- $npx := "npx" -}}
+{{- if eq .chezmoi.os "windows" -}}{{- $npx = "npx.cmd" -}}{{- end -}}
+{{- $statusbar := joinPath .chezmoi.homeDir ".zcode" "zcode-token-usage-statusbar" "usage_mcp.py" -}}
+{{- $toggleKeys := list "enabled" "enable" -}}
+{{- $dst := fromJson (.chezmoi.stdin | default "{}") -}}
+{{- $mcp := index $dst "mcp" -}}
+{{- $servers := dict -}}
+{{- if kindIs "map" $mcp -}}{{- $s := index $mcp "servers" -}}{{- if kindIs "map" $s -}}{{- $servers = $s -}}{{- end -}}{{- end -}}
+{{- /* —— context7 —— */ -}}
+{{- $obj := dict "type" "stdio" "command" $npx "args" (list "-y" "@upstash/context7-mcp@4.1.0") "timeoutMs" 60000 -}}
+{{- $prev := index $servers "context7" -}}
+{{- if kindIs "map" $prev -}}{{- range $k := $toggleKeys -}}{{- $v := index $prev $k -}}{{- if kindIs "bool" $v -}}{{- $obj = setValueAtPath $k $v $obj -}}{{- end -}}{{- end -}}{{- end -}}
+{{- $dst = setValueAtPath "mcp.servers.context7" $obj $dst -}}
+{{- /* —— sequential-thinking —— */ -}}
+{{- $obj = dict "type" "stdio" "command" $npx "args" (list "-y" "@modelcontextprotocol/server-sequential-thinking@2026.8.31") "timeoutMs" 60000 -}}
+{{- $prev = index $servers "sequential-thinking" -}}
+{{- if kindIs "map" $prev -}}{{- range $k := $toggleKeys -}}{{- $v := index $prev $k -}}{{- if kindIs "bool" $v -}}{{- $obj = setValueAtPath $k $v $obj -}}{{- end -}}{{- end -}}{{- end -}}
+{{- $dst = setValueAtPath "mcp.servers.sequential-thinking" $obj $dst -}}
+{{- /* —— chrome-devtools —— */ -}}
+{{- $obj = dict "type" "stdio" "command" $npx "args" (list "-y" "chrome-devtools-mcp@1.9.0") "timeoutMs" 120000 -}}
+{{- $prev = index $servers "chrome-devtools" -}}
+{{- if kindIs "map" $prev -}}{{- range $k := $toggleKeys -}}{{- $v := index $prev $k -}}{{- if kindIs "bool" $v -}}{{- $obj = setValueAtPath $k $v $obj -}}{{- end -}}{{- end -}}{{- end -}}
+{{- $dst = setValueAtPath "mcp.servers.chrome-devtools" $obj $dst -}}
+{{- /* —— zcode-token-usage-statusbar —— */ -}}
+{{- $obj = dict "type" "stdio" "command" .zcodePythonPath "args" (list $statusbar) "timeoutMs" 60000 -}}
+{{- $prev = index $servers "zcode-token-usage-statusbar" -}}
+{{- if kindIs "map" $prev -}}{{- range $k := $toggleKeys -}}{{- $v := index $prev $k -}}{{- if kindIs "bool" $v -}}{{- $obj = setValueAtPath $k $v $obj -}}{{- end -}}{{- end -}}{{- end -}}
+{{- $dst = setValueAtPath "mcp.servers.zcode-token-usage-statusbar" $obj $dst -}}
+{{- /* —— codebase-memory-mcp（红色级：仅 Windows 且路径非空时渲染）—— */ -}}
+{{- if and (eq .chezmoi.os "windows") .zcodeCodebaseMemoryPath -}}
+{{- $obj = dict "type" "stdio" "command" .zcodeCodebaseMemoryPath "args" (list) "timeoutMs" 120000 -}}
+{{- $prev = index $servers "codebase-memory-mcp" -}}
+{{- if kindIs "map" $prev -}}{{- range $k := $toggleKeys -}}{{- $v := index $prev $k -}}{{- if kindIs "bool" $v -}}{{- $obj = setValueAtPath $k $v $obj -}}{{- end -}}{{- end -}}{{- end -}}
+{{- $dst = setValueAtPath "mcp.servers.codebase-memory-mcp" $obj $dst -}}
+{{- end -}}
+{{- /* —— plugins.enabledPlugins 逐键设置（其余键保留）—— */ -}}
+{{- $dst = setValueAtPath "plugins.enabledPlugins.github@zcode-plugins-official" true $dst -}}
+{{- $dst = setValueAtPath "plugins.enabledPlugins.mimosa@zcode-plugins-official" false $dst -}}
+{{- $dst = setValueAtPath "plugins.enabledPlugins.android-emulator@zcode-plugins-official" true $dst -}}
+{{- $dst = setValueAtPath "plugins.enabledPlugins.computer-use@zcode-plugins-official" true $dst -}}
+{{- toPrettyJson $dst -}}

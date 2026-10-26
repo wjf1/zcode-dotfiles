@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：本地 `main` 已包含 **v2.2.0（T1–T3）与 v2.3.0（T4–T7 + T10）** 的全部内容（2026-10-26 完成，`sh tests/acceptance.sh` 全程 PASS），**尚未打 tag、尚未推送**——发布动作与命令清单见 §5 待办 7；GitHub 上最新发布仍为 v2.1.3
+- **当前版本**：本地 `main` 已包含 **v2.2.0（T1–T3）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8，灰度）** 的全部内容（2026-10-26 完成，`sh tests/acceptance.sh` 全程 PASS），**尚未打 tag、尚未推送**——发布动作与命令清单见 §5 待办 7；GitHub 上最新发布仍为 v2.1.3
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -13,7 +13,7 @@
 ## 2. 技术栈与运行基线
 
 - **核心工具**：chezmoi **v2.73.0**（实测基线；升级前请重跑验收，见 §6 避坑）
-- **运行时**：Python 3（`config.json` 合并脚本 + 状态栏 MCP）；Node.js 18+（黄色级 MCP 经 `npx` 启动）；PowerShell（Windows 侧 `run_once`）
+- **运行时**：Python 3（仅状态栏 MCP 需要；v2.4.0 起 `config.json` 合并已去 Python 化）；Node.js 18+（黄色级 MCP 经 `npx` 启动）；PowerShell（Windows 侧 `run_once`）
 - **验证语言**：验收脚本为 POSIX `sh`，JSON/字节比对用 Python 3；`.ps1` 一律带 UTF-8 BOM
 - **常用命令**：
 
@@ -33,7 +33,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 ├── mcp-deps.yaml                     # MCP 分级清单（唯一事实源，CI 漂移检查对照它）
 ├── dot_zcode/                        # → ~/.zcode/
 │   ├── AGENTS.md / commands/usage.md / cli/plugins/known_marketplaces.json   # verbatim
-│   ├── cli/modify_config.json.py.tmpl        # config.json 深合并（stdin → stdout）
+│   ├── cli/modify_config.json                # config.json 深合并（chezmoi:modify-template，stdin → stdout）
 │   ├── cli/plugins/installed_plugins.json.tmpl  # installPath 按 homeDir 渲染
 │   └── exact_skills/                 # → ~/.zcode/skills/（exact_ 镜像；点号目录用 dot_ 编码）
 ├── run_once_after_10-install-mcp-deps.{sh,ps1}
@@ -78,6 +78,12 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **T6（P1-3）**：adopt 助手识别软链/junction（sh `[ -L ]` / ps1 `LinkType`），`--add` 对链接实体化复制、不再 `chezmoi add`；README 双语 §6 新增「ZCode 设置页技能导入」。
   - **T7**：验收技能计数断言参数化（`SKILL_DIRS` / `SKILL_FILES` 按源侧动态生成，去 40/191 硬编码；R2b 冗余计数断言删除）；探针验证计数自动跟随（40/191 → 41/192）。
   - **T10**：README 双语 §5 新增「当你在 ZCode 设置页改了东西」四类操作对照表；VERIFY.md 增补 2026-10-26 批次验收实录；本文件版本状态与待办同步更新。
+- `v2.4.0`（2026-10-26，批次 C = T8，本地待发布，灰度）：
+  - **Phase A 探测（PROBES.md D11）**：`chezmoi:modify-template` 在 v2.73.0 **真实可用**，但文件名必须带 `modify_` 前缀且不能带 `.tmpl` 后缀——D2 探测 1 当年的失败根因确认为 `.tmpl` 后缀（先按普通模板渲染，stdin 尚未注入）；无 `modify_` 前缀的魔法注释不生效（被当普通文件原样部署）。
+  - **实现**：新增 `dot_zcode/cli/modify_config.json`（首行 `{{- /* chezmoi:modify-template */ -}}`），用 `index` 导航目标数据（规避 `missingkey=error`）、`setValueAtPath` 整对象替换 5 个 MCP 条目（继承目标机 `enabled`/`enable`，T4 语义）、逐键设置 `plugins.enabledPlugins`、条件渲染 `codebase-memory-mcp`；旧 Python 实现整体移入 `legacy/modify_config.json.py.tmpl`。
+  - **灰度验证**：三组 fixture（空文件 / 含自定义 server / 含 enabled=false）上新旧实现输出**语义等价**（JSON 结构相等）；全量验收 PASS 且产物为合法 JSON。
+  - **有意降级**：目标 `config.json` 损坏时 apply 快速失败（Go 模板无 try/catch），相对旧版"留档 `.broken-backup` 后按空对象合并"为明确取舍，已在 README「已知限制」与 CHANGELOG 声明。
+  - **依赖变化**：部署不再需要 Python 3（`.chezmoi.toml.tmpl` 保留 `[interpreters.py]` 兜底并注明仅状态栏 MCP 需要 Python）。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
@@ -99,13 +105,13 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
    - `git push origin main --tags`
    - 核验/创建两个 GitHub Release，标题与上述 tag 注释逐字一致，正文与 CHANGELOG 对应版本段落对齐。
    真机走查建议：一台装有 ZCode ≥3.16 的机器重跑 run_once 观察 `[plugins]` 行为；设置页改一次 MCP 开关 → `chezmoi apply` → 重开设置页确认开关仍在。
-8. **T8（合并逻辑去 Python 化，属 v2.4.0 灰度）与 T9（mcp-deps.yaml 单源渲染）**：T8 必须先做 Phase A 探测（`modify_` 模板不能带 `.tmpl` 后缀，PROBES.md D2 探测 1 的失败正是带后缀所致），探测通过后再实施；T9 在 T8 稳定一个发布周期后评估，若模板复杂度上升大于维护收益则写结论存档到 PROBES.md 后关闭。
+8. **T8 已完成（2026-10-26，v2.4.0 本地待发布）**：modify-template 实现落地，全量验收 PASS + 三组 fixture 新旧实现语义等价。**灰度观察项**——在真机（主力机）跑一轮 `chezmoi apply`，确认 `~/.zcode/cli/config.json` 与语义预期一致、损坏文件场景报错清晰。**T9（mcp-deps.yaml 单源渲染）**：待 v2.4.0 稳定一个发布周期后评估；执行前须先写 1 页设计说明交人工确认，若评估为负收益则把 3 段结论存档 PROBES.md 后关闭。
 
 ## 6. 关键避坑与运行约束
 
 以下均为 2026-10-06 实测结论（原始记录见 PROBES.md），**改动相关文件前务必先读**：
 
-1. **`modify_` 脚本的目标名与解释器**：chezmoi 依次剥掉 `.tmpl` 与**已注册的脚本扩展名**。因此文件必须叫 `modify_config.json.py.tmpl`（`.py` 是内置脚本扩展名，剥掉后目标名才是 `config.json`）。**不要把 `.json` 注册进 `[interpreters]`**——那会把目标名剥成 `config`。
+1. **`modify_` 的目标名推导**：chezmoi 依次剥掉 `.tmpl` 与**已注册的脚本扩展名**。Python 脚本时代文件必须叫 `modify_config.json.py.tmpl`（`.py` 剥掉后目标名还原为 `config.json`）；**不要把 `.json` 注册进 `[interpreters]`**——那会把目标名剥成 `config`。v2.4.0 起合并改用 modify-template：文件名必须带 `modify_` 前缀且**不带任何后缀**（`dot_zcode/cli/modify_config.json`），带 `.tmpl` 会先按普通模板渲染、stdin 未注入即报 `map has no entry for key "stdin"`（D2 探测 1 的根因，见 D11）。
 2. **Windows 不读 shebang**，按扩展名选解释器。解释器必须由 `.chezmoi.toml.tmpl` 的 `[interpreters.py]` 指向采集到的绝对路径；不要依赖命令名 `python3`（主力机上是失效的商店跳转桩）。
 3. **`.chezmoiignore` 匹配"派生后的目标名"**：排除 run_once 脚本要写 `10-install-mcp-deps.sh`，写源文件名无效。
 4. **`chezmoi diff` 会把 `run_` 脚本列为新增文件**：任何幂等断言都必须加 `--exclude=scripts`，否则 diff 永远非空。

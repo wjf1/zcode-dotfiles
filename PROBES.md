@@ -97,3 +97,15 @@
 
 - 结果：PowerShell 5.1 的 stdout 走系统代码页，与 UTF-8 断言字符串不匹配。
 - 采用方案：两个 run_once 脚本输出 ASCII 平台标记（`platform=windows` / `platform=unix` / `skipped-by-unix-script`），acceptance 只断言 ASCII 标记，同时可判定"是否错误执行了另一平台的脚本"。
+
+## D11（新增，2026-10-26）`chezmoi:modify-template` 在 v2.73.0 的可用性与命名要求
+
+- 背景：D2 探测 1 曾判定 modify-template 不可用，但当时文件名是 `modify_config.json.tmpl`。官方文档明确 "Modify templates must not have a `.tmpl` extension"——带 `.tmpl` 会先按普通模板渲染，`.chezmoi.stdin` 尚未注入，正好复现其报错 `map has no entry for key "stdin"`。
+- 方法：临时源目录放两个变体同内容文件（`{{- /* chezmoi:modify-template */ -}}` + `fromJson (.chezmoi.stdin | default "{}")` + `setValueAtPath "a.b"` + `toPrettyJson`），apply 后观察目标树与内容：
+  1. `dot_x/config.json`（无 `modify_` 前缀，仅魔法注释）；
+  2. `plainy/modify_config.json`（`modify_` 前缀、无 `.tmpl` 后缀）。
+- 结果：
+  - 变体 1 **不生效**：被当普通文件原样部署（模板未执行、无 stdin 合并），目标名 `dot_x` → `.x`。
+  - 变体 2 **完全生效**：目标名正确还原为 `config.json`；stdin 注入（目标不存在时为空，`default "{}"` 兜底）；`setValueAtPath` 创建中间键；输出 `{"a": {"b": "NEW"}}`；预置 `{"a":{"b":"OLD"},"keep":true}` 再 apply 后 `a.b` 更新且顶层 `keep` 保留；第二次 apply 幂等；写入非法 JSON 时 apply 快速失败（`fromJson` 明确报错）。
+- 结论：**modify-template 在 2.73.0 真实可用，但文件名必须带 `modify_` 前缀且不能带 `.tmpl` 后缀；魔法注释本身不能替代前缀**。D2 探测 1 的失败根因定案为 `.tmpl` 后缀。
+- 采用方案：v2.4.0 起 `dot_zcode/cli/modify_config.json`（modify-template）替代 Python 合并脚本（旧实现移入 `legacy/`），三组 fixture 新旧实现语义等价（见 VERIFY.md 2026-10-26 记录）。

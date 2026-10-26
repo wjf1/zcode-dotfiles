@@ -2,6 +2,20 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.4.0 — 2026-10-26
+
+### 变更
+
+- **合并逻辑去 Python 化：`config.json` 改由 chezmoi 原生 `modify-template` 深合并（P2-1，灰度）**：
+  - **Phase A 探测（新增 PROBES.md D11）**：`chezmoi:modify-template` 在 v2.73.0 真实可用，但**文件名必须带 `modify_` 前缀且不能带 `.tmpl` 后缀**——带 `.tmpl` 会先按普通模板渲染（stdin 未注入，报 `map has no entry for key "stdin"`），无 `modify_` 前缀的魔法注释不生效（被当普通文件原样部署）。D2 探测 1 的失败根因就此定案。
+  - **实现**：新增 `dot_zcode/cli/modify_config.json`（无后缀），语义逐条对齐 Python 版——顶层未声明键天然保留、5 个 MCP 条目整对象替换并继承目标机 `enabled`/`enable` 开关（T4 语义）、`plugins.enabledPlugins` 逐键设置、`codebase-memory-mcp` 保持 Windows + 路径非空条件渲染；对目标数据一律用 `index` 导航以规避模板 `missingkey=error`。旧实现整体移入 `legacy/modify_config.json.py.tmpl`（已被 `.chezmoiignore` 排除）。
+  - **灰度验证**：三组 fixture（空文件 / 含自定义 server / 含 enabled=false）上新旧实现输出**语义等价**（JSON 结构相等）；`sh tests/acceptance.sh` 全量 PASS，渲染产物为合法 JSON。
+  - **依赖变化**：**部署不再需要 Python 3**（首次部署采集项相应减少）；`.chezmoi.toml.tmpl` 保留 `[interpreters.py]` 与 `zcodePythonPath`（statusbar MCP 仍需要），注释改为"仅 statusbar MCP 使用"。
+
+### 已知限制
+
+- **`config.json` 损坏时 apply 会失败**：Go 模板无 try/catch，目标文件为非法 JSON 或顶层不是对象时 apply 快速失败并给出明确报错——相对旧版"留档 `.broken-backup` 后按空对象合并"是**有意降级**；请先修复或删除该文件再 apply（README「已知限制」同步声明）。
+
 ## v2.2.0 — 2026-10-26
 
 ### 变更
