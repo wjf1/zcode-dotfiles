@@ -106,6 +106,15 @@ chezmoi apply         # 仅应用本地 source 状态
 
 你在 ZCode 设置页对**模板已声明**的 server 做的启用/禁用开关会被保留（`enabled` 字段继承）；但条目内的 command / args / timeoutMs 始终以模板为准。
 
+**当你在 ZCode 设置页改了东西**——四类常见操作与下次 `chezmoi apply` 的结果对照：
+
+| 你在 ZCode 里做的事 | 写入位置 | 下次 `chezmoi apply` 的结果 |
+|---|---|---|
+| 禁用/启用某个 MCP server | `cli/config.json` 的 `enabled` | **保留**（`enabled`/`enable` 继承） |
+| 修改某个 MCP 的 command / args / timeoutMs | 同上 | **被还原**为模板值 |
+| 从设置页导入技能（软链/junction） | `~/.zcode/skills/` | **被删除**，需先 `tools/adopt-local-skills --add`（会实体化） |
+| 安装/卸载插件 | `cli/plugins/` | 安装记录按模板对齐（有 CLI 时 `run_once` 会自动补装）；缓存由 ZCode 自行下载 |
+
 ### 6. 技能：`exact_` 语义与 adopt 助手 ⚠️
 
 `dot_zcode/exact_skills/` 带 `exact_` 语义：**目标 `~/.zcode/skills/` 里任何未被仓库纳管的技能，会在下一次 `apply` 时被删除。**
@@ -225,6 +234,15 @@ chezmoi apply         # apply the local source state only
 Machine-local MCP servers you add to `config.json` are **not** wiped: entries declared by the template replace same-named entries wholesale, while undeclared entries (including custom top-level keys) are preserved.
 
 Enable/disable toggles you set in the ZCode settings page for **template-declared** servers are preserved (the `enabled` field is inherited); but command / args / timeoutMs inside each entry always follow the template.
+
+**When you change things in the ZCode settings page** — four common operations and what the next `chezmoi apply` does:
+
+| What you did in ZCode | Where it lands | Result on next `chezmoi apply` |
+|---|---|---|
+| Enable/disable an MCP server | `enabled` in `cli/config.json` | **preserved** (`enabled`/`enable` inherited) |
+| Change an MCP's command / args / timeoutMs | same file | **reverted** to template values |
+| Import a skill from the settings page (symlink/junction) | `~/.zcode/skills/` | **deleted** — run `tools/adopt-local-skills --add` first (it materializes the link) |
+| Install/uninstall plugins | `cli/plugins/` | install records re-aligned to the template (with the CLI, `run_once` auto-installs); the cache is re-downloaded by ZCode |
 
 ### 6. Skills: `exact_` semantics and the adopt helper ⚠️
 

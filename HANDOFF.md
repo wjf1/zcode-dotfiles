@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`v2.1.3`（2026-10-12）——补并 v2.1.2 遗漏的「任务清单同步」章节（18886 → 19666 字节）；本机（主力 Windows 机）`chezmoi apply` 后与源逐字节一致
+- **当前版本**：本地 `main` 已包含 **v2.2.0（T1–T3）与 v2.3.0（T4–T7 + T10）** 的全部内容（2026-10-26 完成，`sh tests/acceptance.sh` 全程 PASS），**尚未打 tag、尚未推送**——发布动作与命令清单见 §5 待办 7；GitHub 上最新发布仍为 v2.1.3
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -68,21 +68,38 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
 - `v2.1.3`（2026-10-12）：
   - **补并 v2.1.2 遗漏的本地增量**：`AGENTS.md` 补入 2026-10-10 加入本机但 v2.1.1 / v2.1.2 均未收录的 `## 任务清单同步（TodoWrite / 会话卡片）` 章节（18886 → 19666 字节），并同步更新「全文优先级索引」；`chezmoi apply` 后本机 `~/.zcode/AGENTS.md`、`cli/config.json` 与源逐字节一致（config.json 顺势补上落后的 `zcode-token-usage-statusbar.timeoutMs`）。
   - **「双向同步」场景的第二个样本**：与 v2.1.2 的"云端 vs 主力机"合并相比，本次是"两次合并都漏掉了本机存量节"——处理路径固定为「先拉齐云端（`git -c http.proxy= pull` 绕开故障代理）→ 源文件做并集编辑 → `chezmoi apply` 落地 → 文档四件套 + tag + 推送」，全程不做单向覆盖。
+- `v2.2.0`（2026-10-26，批次 A = T1–T3，本地待发布）：
+  - **T1（P0-1）**：`modify_config.json.py.tmpl` 的 5 个 MCP 条目在对象首键补显式 `"type": "stdio"`，摆脱"缺 type 自动归一化"兼容逻辑；刻意**不加** `enabled`（避免 apply 强行重新启用用户手动禁用的 server，默认值语义归 T4）。验收 R1 断言同步新增 type 检查。
+  - **T2（P0-2）**：README 双语 §4 补「ZCode ≥3.16 起个人模型配置在 `~/.zcode/v2/provider_config.json`（含明文 API Key），本仓库不纳管该文件与整个 `~/.zcode/v2/`」；`dot_zcode/AGENTS.md` 工具调用避坑补「ZCode 运行时网络走自己的配置」（`network.httpProxy` / `ZCODE_HTTP_PROXY` / `ZCODE_NO_PROXY` / `ZCODE_AGENT_CA_CERT`）。
+  - **T3（P2-2）**：验收漂移检查升级为「名字 + 锁定版本」双向比对（`pkg@x.y.z` 级、含 scoped 包，失败列出差异项）；红/绿双测验证（篡改 yaml 版本 → 退出码 1 并列出两侧差异 → 还原 → PASS）。
+- `v2.3.0`（2026-10-26，批次 B = T4–T7 + T10，本地待发布）：
+  - **T4（P1-1）**：`merge()` 从"整体覆盖"改为"覆盖但继承目标机 `enabled`/`enable` 布尔开关"，用户在设置页禁用的 server 不再被 apply 还原；新增 R1b 用例；README 双语说明。
+  - **T5（P1-2）**：run_once 双脚本新增插件幂等安装段（`zcode plugins list --json` 查询 → `zcode plugins install github@zcode-plugins-official --scope user`；任何失败仅 `[plugins] WARN` 不阻塞；`ZCODE_TEST_NO_SIDE_EFFECTS=1` 整段跳过）；`installed_plugins.json.tmpl` 保留为无 CLI 兜底。
+  - **T6（P1-3）**：adopt 助手识别软链/junction（sh `[ -L ]` / ps1 `LinkType`），`--add` 对链接实体化复制、不再 `chezmoi add`；README 双语 §6 新增「ZCode 设置页技能导入」。
+  - **T7**：验收技能计数断言参数化（`SKILL_DIRS` / `SKILL_FILES` 按源侧动态生成，去 40/191 硬编码；R2b 冗余计数断言删除）；探针验证计数自动跟随（40/191 → 41/192）。
+  - **T10**：README 双语 §5 新增「当你在 ZCode 设置页改了东西」四类操作对照表；VERIFY.md 增补 2026-10-26 批次验收实录；本文件版本状态与待办同步更新。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
 按优先级：
 
 1. **macOS / Linux 真机实测（P0，阻塞"三平台可用"的对外声明）**：跑一遍单命令部署，确认 `~/.zcode` 路径、`/usr/bin/python3` 存在性、`exact_` 权限语义、`npx` 三包可启动；结果补进 VERIFY.md。
-2. **ZCode 读取 `installed_plugins.json` 的行为（P1）**：在新机上观察 `installPath` 指向空缓存目录时，ZCode 是提示安装还是误认为已装。若为后者，考虑把该文件改为不渲染 `plugins`，或干脆不同步。
+2. ~~**ZCode 读取 `installed_plugins.json` 的行为（P1）**~~ **已由 T5 替代处理（2026-10-26）**：插件安装改由 run_once 调 `zcode plugins install` 幂等执行——不再猜测 ZCode 对 installPath 的读取行为，让 ZCode 自己装；`installed_plugins.json.tmpl` 保留为无 CLI 环境兜底。真机上 run_once 的 `[plugins]` 实际行为仍值得观察一轮（并入待办 7 的真机走查）。
 3. ~~**存量机（主力 Windows 机）切换（P1）**~~ **已完成（2026-10-08），并于 2026-10-12 复核后重新接管**：主力机装好 chezmoi v2.73.0 并接入源仓库（`~/.local/share/chezmoi`）。切换前已把本机技能补齐到与仓库一致的 40 个（`agent-reach`、`apk-reverse` 手工落位，含 `literal_` 前缀还原），故 `exact_` 无删除动作。
    - **2026-10-12 复核结论**：本机 `~/.local/share/chezmoi` 与 `~/.config/chezmoi/chezmoi.toml` 均不存在（`chezmoi doctor` 报 source-dir error），即上一轮记录的"接管"在本机并未真正生效。**教训**：`chezmoi init --apply` 是否落地必须用 `chezmoi doctor` / `chezmoi status` 复核，不能只看命令退出码。
    - **本轮接管路径**（避开已知的代理坑）：先 `git clone <repo> ~/.local/share/chezmoi` 手动落源目录，再 `chezmoi init --promptDefaults --apply`——源目录已是 git 仓库时 chezmoi 跳过克隆，`--promptDefaults` 让两个 `promptStringOnce` 直接取默认值，全程免交互（否则 agent 会话里会卡在交互提示）。
    - 实际踩到的坑（已记入第 6 节）：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
    - **2026-10-12 二次复核（v2.1.3 发布时）**：接管本次确认生效——`chezmoi status` 空输出、`chezmoi apply` 幂等、`~/.zcode/AGENTS.md` 与 `cli/config.json` 对源逐字节一致。另实测当日代理链路抖动：git 经 `127.0.0.1:7900` 访问 GitHub 握手失败、直连正常，`git -c http.proxy=` 仍是最可靠绕行。
 4. **`exact_` 与 `npx skills add` 的摩擦（P2）**：目前靠 adopt 助手 + README 纪律兜底。若嫌麻烦，可去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留）。决策前建议先实测一两周的日常手感。
-5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
+5. ~~**MCP 版本升级流程（P2）**~~ **2026-10-26 部分解决（T3）**：验收漂移检查已升级为「名字 + 锁定版本」双向比对，`mcp-deps.yaml` ↔ 模板漏改任意一处即红且列出差异项。升级 MCP 仍需改 yaml + 模板两处，是否进一步收敛为 yaml 单源渲染见待办 8（T9）评估。
 6. **chezmoi 版本升级（P3）**：升到含 `chezmoi:modify-template` + `.chezmoi.stdin` 的版本后，可评估把 `config.json` 合并改回纯模板实现（省掉 Python 依赖）。届时需重跑验收。
+7. **本批次（v2.2.0 / v2.3.0）的发布动作——需人工确认后才执行**：本地 `main` 已全部就绪且验收 PASS。确认后依次执行：
+   - `git tag -a v2.2.0 -m "v2.2.0: MCP 条目显式传输类型、文档边界与版本级漂移检查"`
+   - `git tag -a v2.3.0 -m "v2.3.0: 设置页开关继承、CLI 幂等插件安装与 adopt 链接实体化"`
+   - `git push origin main --tags`
+   - 核验/创建两个 GitHub Release，标题与上述 tag 注释逐字一致，正文与 CHANGELOG 对应版本段落对齐。
+   真机走查建议：一台装有 ZCode ≥3.16 的机器重跑 run_once 观察 `[plugins]` 行为；设置页改一次 MCP 开关 → `chezmoi apply` → 重开设置页确认开关仍在。
+8. **T8（合并逻辑去 Python 化，属 v2.4.0 灰度）与 T9（mcp-deps.yaml 单源渲染）**：T8 必须先做 Phase A 探测（`modify_` 模板不能带 `.tmpl` 后缀，PROBES.md D2 探测 1 的失败正是带后缀所致），探测通过后再实施；T9 在 T8 稳定一个发布周期后评估，若模板复杂度上升大于维护收益则写结论存档到 PROBES.md 后关闭。
 
 ## 6. 关键避坑与运行约束
 

@@ -102,3 +102,41 @@ git clone https://github.com/wjf1/zcode-dotfiles.git
 cd zcode-dotfiles
 sh tests/acceptance.sh      # 需要 chezmoi 与 Python 3
 ```
+
+---
+
+## 2026-10-26（v2.2.0 / v2.3.0 批次验收：T1–T7、T10）
+
+- 验收日期：2026-10-26；执行人：ZCode（本机会话，自动化）
+- 环境：Windows 10.0.26200（`MINGW64_NT-10.0-26200`）、chezmoi v2.73.0、Python 3.12.10（经 `python` 调用）、Node.js v22.23.2、Git 2.54.0
+- 基线：全新克隆 https://github.com/wjf1/zcode-dotfiles（ccfbb05，v2.1.3）；**基线 `sh tests/acceptance.sh` 先行 PASS** 后才开工
+
+### 结论
+
+```
+ACCEPTANCE PASS      # 退出码 0（脚本开头输出 skills: 40 dirs / 191 files）
+```
+
+### 关键用例实录（命令 + 关键行 + 退出码，非手工整理）
+
+- **基线自检**：`sh tests/acceptance.sh` → 退出码 0，`ACCEPTANCE PASS`。
+- **T1**：`grep -o '"type": "stdio"' .test-home/dest/.zcode/cli/config.json | wc -l` → `5`（≥ 4 达标）；R1 输出新增 `type=stdio 已显式声明`。
+- **T3 红测试**：`sed -i 's/context7-mcp@4.1.0/context7-mcp@9.9.9/' mcp-deps.yaml && sh tests/acceptance.sh` → **退出码 1**，并输出两侧差异：
+  `以下版本只在 mcp-deps.yaml 中声明，模板未渲染： ['@upstash/context7-mcp@9.9.9']`
+  `以下版本只在模板中出现，未登记到 mcp-deps.yaml： ['@upstash/context7-mcp@4.1.0']`
+  `git checkout mcp-deps.yaml` 还原后重跑 → 退出码 0。
+- **T4（R1b）**：向沙箱 `config.json` 写入 `context7 = {"enabled": false, "command": "stale", "args": [], "timeoutMs": 1000}` 后 re-apply，实际产物：
+  `{"type": "stdio", "command": "npx.cmd", "args": ["-y", "@upstash/context7-mcp@4.1.0"], "timeoutMs": 60000, "enabled": false}`
+  ——`enabled: false` 被继承保留，command / args / timeoutMs / type 全部恢复模板值。
+- **T5**：跨平台调度步骤（真实 apply）输出含 `[plugins] SKIP test-mode`；`.test-home/` 内未产生任何插件缓存目录；`.ps1` 的 BOM（`ef bb bf`）完好。
+- **T6**：junction 夹具（PowerShell `New-Item -ItemType Junction`）+ 普通目录对照——sh 输出 `unmanaged (symlink -> /tmp/sk-src/demo): demo` 与 `unmanaged: plain`，ps1 输出 `unmanaged (symlink -> C:\...\sk-src\demo): demo`；`--add` 在隔离假源（`USERPROFILE` + `sourceDir` 均指向临时目录，不碰真实 `~/.local/share/chezmoi`）中把 junction **实体化**为普通文件副本（内容 `x`、非链接、含点号目录路径走 `cp -R dir/.` 语义），sh / ps1 均未执行 `chezmoi add`。
+- **T7 探针**：`mkdir dot_zcode/exact_skills/_probe && echo p > _probe/SKILL.md` 后 acceptance → 退出码 0，计数自动跟随输出 `skills: 41 dirs / 192 files`；探针删除后 `git status --short` 干净。
+  （首轮实现曾把 `$SKILL_DIRS` 直接写在全角括号前，被脚本内置的「shell 可移植性」闸门拦下，改为 `${SKILL_DIRS}` 后通过——该闸门有效。）
+- **提交纪律**：一任务一提交（d9e6609 → 收口提交共 8 个），每次提交前该轮验收 PASS。
+
+### 未覆盖 / 待人工验证（诚实声明）
+
+1. **`zcode plugins install --scope user` 的真实安装路径**：本会话验收全部走 `ZCODE_TEST_NO_SIDE_EFFECTS=1` 跳过路径，未真实安装；需在装有 ZCode ≥3.16 的机器上重跑 run_once 观察实际安装行为后回填本文件。
+2. **adopt 实体化的端到端**：本会话用隔离假源验证语义；真实 `~/.local/share/chezmoi` 源目录上的完整导入 → adopt → apply 链路待真机走查。
+3. **`enabled` 继承的真实 UI 往返**：设置页改开关 → `chezmoi apply` → 重开设置页确认，建议人工走查一次。
+4. **macOS / Linux 真机仍未实测**（沿用上文 2026-10-07 声明，由 CI 三平台矩阵覆盖）。

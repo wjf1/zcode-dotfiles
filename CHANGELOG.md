@@ -13,6 +13,7 @@
 - **插件安装改由 `zcode plugins install` 幂等执行（P1-2）**：两个 run_once 脚本在渲染产物自检后新增插件安装段——先 `zcode plugins list --json` 查询、已装即跳过（幂等）；未装则 `zcode plugins install github@zcode-plugins-official --scope user`；`zcode` CLI 缺失 / 子命令不支持 / 网络失败一律只输出 `[plugins] WARN`，**绝不非零退出**阻塞部署。`ZCODE_TEST_NO_SIDE_EFFECTS=1` 时整段跳过（验收沙箱输出 `[plugins] SKIP test-mode`，绝不真实安装插件）。`installed_plugins.json.tmpl` 保留为无 CLI 环境的兜底。验收对 .sh 主体、Windows 早退分支、.ps1、跨平台调度（真实 apply）四处全部注入测试模式变量并断言 SKIP。
 - **adopt 工具识别软链 / junction 并实体化（P1-3）**：ZCode 3.16 起设置页技能导入默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，`exact_` 语义会在下次 apply 删除它们。adopt 助手现在能识别链接（sh 用 `[ -L ]` / ps1 用 `LinkType` 判定 `SymbolicLink` / `Junction`），列表输出 `unmanaged (symlink -> <target>)`；`--add` 对链接**不再 `chezmoi add`**（会把链接语义带进 source），改为实体化复制为普通目录（sh `cp -R`，ps1 `Get-ChildItem -Force | Copy-Item -Recurse`，均含点号目录），输出 `materialized -> ...`。两个脚本末尾新增行为提示；README 双语 §6 新增「ZCode 设置页技能导入」小节（导入 → 立即 adopt；要跟随上游则走 `npx skills` + adopt，并说明两种方式代价）。
 - **验收计数断言参数化，去掉 40 / 191 硬编码**：`tests/acceptance.sh` 顶部按源侧 `dot_zcode/exact_skills` 的实际目录 / 文件数生成 `SKILL_DIRS` / `SKILL_FILES`（源与目标 1:1 映射，`dot_` / `literal_` 只改前缀不改数量，故直接以源侧为准），T2.1、R3、R3b 的计数断言全部改引动态值并在脚本开头输出实际计数；R2b 内联 Python 中冗余的 191 硬编码断言删除（集合比对已覆盖计数语义）。此后技能增删不再需要手改验收脚本。
+- **README 新增「当你在 ZCode 设置页改了东西」+ 文档收口**：README 双语 §5 新增四类 UI 操作对照表（MCP 启停开关**保留**、command / args 修改**还原**、设置页技能导入**被删需先 adopt 实体化**、插件安装记录按模板对齐），把「UI 操作与 apply 的冲突边界」讲清；`HANDOFF.md` 版本状态与待办同步收口（T5 已替代 installPath 观察项、T3 已覆盖版本漂移、新增发布动作待办清单）；`VERIFY.md` 增补 2026-10-26 批次验收实录（T1–T7、T10 的命令 + 关键行 + 退出码 + 诚实声明）。
 
 ## v2.1.3 — 2026-10-12
 
