@@ -24,19 +24,35 @@ foreach ($d in Get-ChildItem -Directory $skillsDir) {
   $name = $d.Name
   if (Test-Path (Join-Path $exact $name)) { continue }
   $found = 1
-  Write-Host "unmanaged: $name"
+  # ZCode 3.16 起设置页技能导入默认建软链（Windows 为 junction）：
+  # 链接语义绝不能带进 chezmoi source，纳管时必须实体化。
+  $item = Get-Item -Force $d.FullName
+  $isLink = ($item.LinkType -eq "SymbolicLink" -or $item.LinkType -eq "Junction")
+  if ($isLink) {
+    Write-Host "unmanaged (symlink -> $($item.Target)): $name"
+  } else {
+    Write-Host "unmanaged: $name"
+  }
   if ($Add) {
-    # 先按目标路径纳管，再整体挪进 exact_skills/，避免 source 里出现
-    # dot_zcode/skills 与 dot_zcode/exact_skills 两个目录同指一个目标。
-    chezmoi add $d.FullName
-    $added = Join-Path $plain $name
-    if (Test-Path $added) {
-      New-Item -ItemType Directory -Force -Path $exact | Out-Null
-      Move-Item $added (Join-Path $exact $name)
-      if ((Test-Path $plain) -and -not (Get-ChildItem $plain -Force)) { Remove-Item $plain -Force }
-      Write-Host "  added -> dot_zcode/exact_skills/$name"
+    if ($isLink) {
+      # 实体化：复制链接指向的内容为普通目录（-Force 含点号目录），不执行 chezmoi add
+      $destDir = Join-Path $exact $name
+      New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+      Get-ChildItem -Force -LiteralPath $d.FullName | Copy-Item -Recurse -Force -Destination $destDir
+      Write-Host "  materialized -> dot_zcode/exact_skills/$name"
     } else {
-      Write-Warning "  未在 source 中找到 $name，请手动核对"
+      # 先按目标路径纳管，再整体挪进 exact_skills/，避免 source 里出现
+      # dot_zcode/skills 与 dot_zcode/exact_skills 两个目录同指一个目标。
+      chezmoi add $d.FullName
+      $added = Join-Path $plain $name
+      if (Test-Path $added) {
+        New-Item -ItemType Directory -Force -Path $exact | Out-Null
+        Move-Item $added (Join-Path $exact $name)
+        if ((Test-Path $plain) -and -not (Get-ChildItem $plain -Force)) { Remove-Item $plain -Force }
+        Write-Host "  added -> dot_zcode/exact_skills/$name"
+      } else {
+        Write-Warning "  未在 source 中找到 $name，请手动核对"
+      }
     }
   }
 }
@@ -47,3 +63,4 @@ if ($found -eq 0) {
 } elseif (-not $Add) {
   Write-Host "提示：加 -Add 参数可逐个纳管；未纳管的技能会在下次 apply 时被删除。"
 }
+Write-Host "注：ZCode 设置页的技能导入默认建软链，纳管时会转为实体副本（与上游更新脱钩）。"

@@ -121,6 +121,8 @@ Windows 用 `powershell -ExecutionPolicy Bypass -File tools\adopt-local-skills.p
 
 **装完新技能请立刻 adopt**，否则下次 `chezmoi update` 会静默删掉它。若你不想承担这个纪律，可直接给 `dot_zcode/exact_skills` 去掉 `exact_` 前缀——代价是仓库里已下线的技能会在本机残留。
 
+**ZCode 设置页技能导入**：ZCode 3.16 起，从设置页导入技能默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，同样受 `exact_` 语义管辖。导入后请立即 `tools/adopt-local-skills --add`：纳管时会自动把软链**实体化**为普通目录副本（与上游更新脱钩，上游更新不会自动跟随；需要更新时重新导入再纳管一次）。若希望持续跟随上游更新，仍建议用 `npx skills add` 安装（落盘即实体文件，无链接语义）+ 装完即 adopt；两种方式都要多一步 adopt 纪律，区别在于实体化副本不会随上游自动变化。
+
 ### 7. 更新与回滚
 
 main 上每个发布点都打 tag。出问题时把 source 切回上一个 tag 再 apply：
@@ -236,6 +238,8 @@ tools/adopt-local-skills.sh --add    # adopt them into dot_zcode/exact_skills/
 ```
 
 **Adopt right after installing a skill**, otherwise the next `chezmoi update` silently removes it. If you would rather not keep that discipline, drop the `exact_` prefix from `dot_zcode/exact_skills` — the trade-off is that skills removed from the repo linger on the machine.
+
+**Skills imported from the ZCode settings page**: since ZCode 3.16, importing a skill there writes a symlink (a junction on Windows) into `~/.zcode/skills/` — also under `exact_` semantics. Run `tools/adopt-local-skills --add` right after importing: when adopting, the tool **materializes** the link into a plain directory copy (decoupled from upstream; re-import and re-adopt to pick up upstream changes). To keep tracking upstream instead, install with `npx skills add` (plain files on disk, no link semantics) and adopt right after; both routes cost one extra adopt step, and the materialized copy simply never follows upstream automatically.
 
 ### 7. Updating and rolling back
 

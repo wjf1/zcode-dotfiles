@@ -11,6 +11,7 @@
 - **漂移检查升级为"名字 + 锁定版本"双向校验（P2-2）**：验收脚本的 `mcp-deps.yaml ↔ 模板` 漂移检查从"只查名字出现"升级为**版本级双向比对**——yaml 登记的每个锁定版本（`pkg@x.y.z`，含 `@scope/pkg@x.y.z`）必须被模板渲染，模板中出现的版本也必须登记在 yaml；断言失败时列出差异项，可直接定位漏改处。升级一个 MCP 不再是"改三处、查一处"。
 - **合并脚本保留 per-machine `enabled` 开关（P1-1）**：`merge()` 对模板声明的 MCP 条目从"整体覆盖"改为"覆盖但继承运行态开关"——目标机已有条目的 `enabled` / `enable` 布尔值会被继承（schema 用 `enabled`，设置页实测可能写 `enable`，两者都认）。用户在 ZCode 设置页禁用的 server 不再被 `chezmoi apply` 静默还原；条目内 command / args / timeoutMs / type 仍以模板为准。验收新增 R1b 用例（改 `enabled:false` + 篡改 command 后 re-apply，断言开关保留、其余字段恢复模板值、其余 server 不受影响），README 双语同步说明。
 - **插件安装改由 `zcode plugins install` 幂等执行（P1-2）**：两个 run_once 脚本在渲染产物自检后新增插件安装段——先 `zcode plugins list --json` 查询、已装即跳过（幂等）；未装则 `zcode plugins install github@zcode-plugins-official --scope user`；`zcode` CLI 缺失 / 子命令不支持 / 网络失败一律只输出 `[plugins] WARN`，**绝不非零退出**阻塞部署。`ZCODE_TEST_NO_SIDE_EFFECTS=1` 时整段跳过（验收沙箱输出 `[plugins] SKIP test-mode`，绝不真实安装插件）。`installed_plugins.json.tmpl` 保留为无 CLI 环境的兜底。验收对 .sh 主体、Windows 早退分支、.ps1、跨平台调度（真实 apply）四处全部注入测试模式变量并断言 SKIP。
+- **adopt 工具识别软链 / junction 并实体化（P1-3）**：ZCode 3.16 起设置页技能导入默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，`exact_` 语义会在下次 apply 删除它们。adopt 助手现在能识别链接（sh 用 `[ -L ]` / ps1 用 `LinkType` 判定 `SymbolicLink` / `Junction`），列表输出 `unmanaged (symlink -> <target>)`；`--add` 对链接**不再 `chezmoi add`**（会把链接语义带进 source），改为实体化复制为普通目录（sh `cp -R`，ps1 `Get-ChildItem -Force | Copy-Item -Recurse`，均含点号目录），输出 `materialized -> ...`。两个脚本末尾新增行为提示；README 双语 §6 新增「ZCode 设置页技能导入」小节（导入 → 立即 adopt；要跟随上游则走 `npx skills` + adopt，并说明两种方式代价）。
 
 ## v2.1.3 — 2026-10-12
 

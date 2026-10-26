@@ -29,18 +29,31 @@ for d in "$SKILLS_DIR"/*/; do
     continue
   fi
   found=1
-  echo "unmanaged: $name"
+  # ZCode 3.16 起设置页技能导入默认建软链（Windows 为 junction）：
+  # 链接语义绝不能带进 chezmoi source，纳管时必须实体化。
+  if [ -L "${d%/}" ]; then
+    echo "unmanaged (symlink -> $(readlink "${d%/}")): $name"
+  else
+    echo "unmanaged: $name"
+  fi
   if [ "$ADD" = "1" ]; then
-    # 先按目标路径纳管，再整体挪进 exact_skills/，避免 source 里出现
-    # dot_zcode/skills 与 dot_zcode/exact_skills 两个目录同指一个目标。
-    chezmoi add "$SKILLS_DIR/$name"
-    if [ -d "$PLAIN/$name" ]; then
-      mkdir -p "$EXACT"
-      mv "$PLAIN/$name" "$EXACT/$name"
-      rmdir "$PLAIN" 2>/dev/null || true
-      echo "  added -> dot_zcode/exact_skills/$name"
+    if [ -L "${d%/}" ]; then
+      # 实体化：复制链接指向的内容为普通目录（含点号目录），不执行 chezmoi add
+      mkdir -p "$EXACT/$name"
+      cp -R "$SKILLS_DIR/$name/." "$EXACT/$name/"
+      echo "  materialized -> dot_zcode/exact_skills/$name"
     else
-      echo "  WARN: 未在 source 中找到 ${name}，请手动核对" >&2
+      # 先按目标路径纳管，再整体挪进 exact_skills/，避免 source 里出现
+      # dot_zcode/skills 与 dot_zcode/exact_skills 两个目录同指一个目标。
+      chezmoi add "$SKILLS_DIR/$name"
+      if [ -d "$PLAIN/$name" ]; then
+        mkdir -p "$EXACT"
+        mv "$PLAIN/$name" "$EXACT/$name"
+        rmdir "$PLAIN" 2>/dev/null || true
+        echo "  added -> dot_zcode/exact_skills/$name"
+      else
+        echo "  WARN: 未在 source 中找到 ${name}，请手动核对" >&2
+      fi
     fi
   fi
 done
@@ -50,3 +63,4 @@ if [ "$found" = "0" ]; then
 else
   [ "$ADD" = "1" ] || echo "提示：加 --add 参数可逐个纳管；未纳管的技能会在下次 apply 时被删除。"
 fi
+echo "注：ZCode 设置页的技能导入默认建软链，纳管时会转为实体副本（与上游更新脱钩）。"
