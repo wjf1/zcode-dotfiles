@@ -2,6 +2,31 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
+## v2.2.0 — 2026-10-29
+
+### 新增
+
+- **`AGENTS.md` 三个新规范章节入库（本机领先版本回推）**：本机（主力 Windows 机）于 2026-10-28 完成的规范整编此前未回推云端，本次以本机版为准入库（21745 → 26760 字节，168 行）。新增三节：
+  - `### 社区健康文件规范`：公开仓库标配 LICENSE + README；开始接受外部贡献（首个外部 issue / PR）时必须补齐 `CONTRIBUTING.md` 与 `SECURITY.md`；`.github/` 目录内聚维护 workflows / ISSUE_TEMPLATE / PR 模板，README 与 LICENSE 必须留根级且全大写。
+  - `### 项目级 AGENTS.md 规范`：活跃项目在仓库根目录维护项目级 `AGENTS.md`（构建 / 测试 / 风格 / PR 规范），monorepo 子包可嵌套、最近者优先；与用户级全局、`HANDOFF.md` 三者分层职责明确。
+  - `### ARCHITECTURE.md 规范`：代码量超 1 万行的项目在根目录维护 `ARCHITECTURE.md`（鸟瞰问题 → codemap → 架构不变量 → 层与系统边界 → 横切关注点），并规定半年复审与「HANDOFF 静态模块引用 ARCHITECTURE 不重复维护」。
+  - 同时按「环境硬约束 / 行为与验收规范 / 仓库工程规范 / 专用环境附录」四分区重排全文并加分区编号，把 `技能安装规范` 归入仓库工程规范、`Command Code 代理` 归入第四分区附录。
+
+### 变更
+
+- **`humanizer` 技能升级至 3.1.0（上游同步）**：由 3.0.0 升至 3.1.0，新增 `CHANGELOG.md`、`.cursor-plugin/plugin.json`（Cursor 插件清单）、`.github/ISSUE_TEMPLATE/` 三个模板与 `workflows/validate.yml`；`SKILL.md` 新增第 6 类写作痕迹「Wrong reader」（回复重复解释对方已知背景、结论被推到最后），`README.md` 重写为含 before/after 示例的版本，`scripts/validate-package.py` 增加对 `CHANGELOG.md` 与 `.cursor-plugin` 的校验。全部经 `dot_` 前缀编码纳管，本机 `.git` 目录已刻意排除（由上游仓库自带，跨机同步无意义且会冲突）。
+- **`known_marketplaces.json` 解除纳管（改为运行时缓存，不入库）**：该文件的 `pluginCount` / `lastUpdated` / `cacheTransactionId` 由 ZCode 每次刷新插件市场时自行改写（本机 56 / 315、仓库快照 40 / 291），纳管只会让每次刷新都产生一次伪差异。现从 `dot_zcode/cli/plugins/` 移除源文件并加入 `.chezmoiignore`，本机文件保持原地不动。
+
+### 修复
+
+- **`ppt-master` 误删风险（`exact_` 语义副作用）**：本机 `~/.zcode/skills/ppt-master`（62MB / 13149 文件，含 12193 个 SVG 模板与 131 个 `__pycache__/*.pyc`）从未入库，而 `dot_zcode/exact_skills` 的 `exact_` 镜像语义会在 `apply` 时删除任何未纳管技能——`chezmoi status` 已实际显示 ` D .zcode/skills/ppt-master`。因体量与构成不适合入库，改为在 `.chezmoiignore` 显式排除，既保住本机技能又杜绝 `apply` 误删。**这是 `exact_` 语义第 3 次绊人（前两次见 v2.1.0 / v2.1.3），`tools/adopt-local-skills.sh` 的「装完技能先跑一次」纪律仍是最优解。**
+
+### 验证
+
+- `chezmoi status` 空输出；`~/.zcode/AGENTS.md` 与源逐字节一致；`~/.zcode/skills/ppt-master` 与 `~/.zcode/cli/plugins/known_marketplaces.json` 均在本机原地保留。
+- `chezmoi apply --dry-run` 不再产生 `ppt-master` 删除动作。
+- `sh tests/acceptance.sh` 退出码 0（ACCEPTANCE PASS），技能树 40 目录 / 196 文件（原 191，`humanizer` 升级带来 +5 文件）。
+
 ## v2.1.3 — 2026-10-12
 
 ### 变更

@@ -12,6 +12,14 @@ mcp-deps.yaml
 tests
 tools
 
+# 本机自装、不入库的技能：ppt-master 含 12193 个 SVG 模板与 __pycache__（约 62MB / 13149 文件），
+# 不纳入 git。必须在此显式排除，否则 dot_zcode/exact_skills 的 exact_ 语义会在 apply 时删掉它。
+.zcode/skills/ppt-master
+
+# ZCode 运行时自己改写的插件市场缓存（pluginCount / lastUpdated / cacheTransactionId 随刷新变化）。
+# 纳管它只会让每次市场刷新都产生一次伪差异，故不入库、不部署。
+.zcode/cli/plugins/known_marketplaces.json
+
 # 按 OS 排除另一侧的 run_once 脚本。
 # 注意：chezmoi 的 ignore 模式匹配的是"派生后的目标名"，脚本会剥掉 run_/once_/after_
 # 前缀，故这里必须写 10-install-mcp-deps.sh|ps1 而不是源文件名。
