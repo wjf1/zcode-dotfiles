@@ -21,3 +21,7 @@ tools
 {{ if eq .chezmoi.os "windows" -}}
 10-install-mcp-deps.sh
 {{ end -}}
+
+# 本机技能 ppt-master：70MB 参考图资产（webp×1.3万文件），不适合实体入库；
+# 加入 ignore 避免被 exact_skills 的精确镜像语义删除。
+.zcode/skills/ppt-master
