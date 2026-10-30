@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`main` 已包含 **v2.2.0（T1–T3 + 2026-10-29 云端回追）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8）** 全部内容；2026-10-31 已与云端分叉线（1194dc8 本机配置回推：AGENTS 三节 / humanizer 3.1.0 / 缓存解纳管 / ppt-master 防误删 / LICENSE）merge 合流，云端独有内容全部吸收，本地结构化工作全保留。**尚未打 tag、尚未推送**——见 §5 待办 7
+- **当前版本**：`main` 已包含 **v2.2.0（T1–T3 + 2026-10-29 云端回追）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8）** 全部内容；2026-10-31 已与云端分叉线（1194dc8 本机配置回推：AGENTS 三节 / humanizer 3.1.0 / 缓存解纳管 / ppt-master 防误删 / LICENSE）merge 合流，云端独有内容全部吸收，本地结构化工作全保留。**已于 2026-10-30 发布**：v2.2.0 / v2.3.0 / v2.4.0 三个 annotated tag + GitHub Release（v2.4.0 指向合流提交 04b998f，Latest）
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -109,14 +109,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
    - 长程：去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留），或用 `dot_zcode/skills/`（非 exact）承载「本机自装、可选同步」类技能——**`ppt-master` 已按后者思路用 ignore 隔离，可作为该方向的原型**。
 5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
 6. ~~**chezmoi 版本升级（P3）**~~ **已由 v2.4.0 实现（T8）**：`config.json` 合并已改由 chezmoi 原生 `modify-template`（`dot_zcode/cli/modify_config.json`）实现，部署不再依赖 Python；`.chezmoi.toml.tmpl` 的 `[interpreters.py]` 仅为 statusbar MCP 保留。
-7. **本批次（v2.2.0 / v2.3.0）的发布动作——需人工确认后才执行**：本地 `main` 已全部就绪且验收 PASS。确认后依次执行：
-   - `git tag -a v2.2.0 -m "v2.2.0: MCP 条目显式传输类型、文档边界与版本级漂移检查"`
-   - `git tag -a v2.3.0 -m "v2.3.0: 设置页开关继承、CLI 幂等插件安装与 adopt 链接实体化"`
-   - `git tag -a v2.4.0 -m "v2.4.0: config.json 合并去 Python 化（chezmoi modify-template 灰度）"`
-   - `git push origin main --tags`
-   - 核验/创建两个 GitHub Release，标题与上述 tag 注释逐字一致，正文与 CHANGELOG 对应版本段落对齐。
-   真机走查建议：一台装有 ZCode ≥3.16 的机器重跑 run_once 观察 `[plugins]` 行为；设置页改一次 MCP 开关 → `chezmoi apply` → 重开设置页确认开关仍在。
-8. **T8 已完成（2026-10-26，v2.4.0 本地待发布）**：modify-template 实现落地，全量验收 PASS + 三组 fixture 新旧实现语义等价。**灰度观察项**——在真机（主力机）跑一轮 `chezmoi apply`，确认 `~/.zcode/cli/config.json` 与语义预期一致、损坏文件场景报错清晰。**T9（mcp-deps.yaml 单源渲染）**：待 v2.4.0 稳定一个发布周期后评估；执行前须先写 1 页设计说明交人工确认，若评估为负收益则把 3 段结论存档 PROBES.md 后关闭。
+7. ~~**本批次（v2.2.0 / v2.3.0）的发布动作**~~ **已完成（2026-10-30，用户确认后执行）**：三个 annotated tag（v2.2.0→8ebdd7e、v2.3.0→8b8ca6e、v2.4.0→04b998f 合流提交）已推送，三个 Release 标题与 tag subject 一致、正文取自 CHANGELOG 对应段落，Latest = v2.4.0。
 
 ## 6. 关键避坑与运行约束
 
