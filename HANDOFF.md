@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：本地 `main` 已包含 **v2.2.0（T1–T3）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8，灰度）** 的全部内容（2026-10-26 完成，`sh tests/acceptance.sh` 全程 PASS），**尚未打 tag、尚未推送**——发布动作与命令清单见 §5 待办 7；GitHub 上最新发布仍为 v2.1.3
+- **当前版本**：`main` 已包含 **v2.2.0（T1–T3 + 2026-10-29 云端回追）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8）** 全部内容；2026-10-31 已与云端分叉线（1194dc8 本机配置回推：AGENTS 三节 / humanizer 3.1.0 / 缓存解纳管 / ppt-master 防误删 / LICENSE）merge 合流，云端独有内容全部吸收，本地结构化工作全保留。**尚未打 tag、尚未推送**——见 §5 待办 7
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。
@@ -85,6 +85,14 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **有意降级**：目标 `config.json` 损坏时 apply 快速失败（Go 模板无 try/catch），相对旧版"留档 `.broken-backup` 后按空对象合并"为明确取舍，已在 README「已知限制」与 CHANGELOG 声明。
   - **依赖变化**：部署不再需要 Python 3（`.chezmoi.toml.tmpl` 保留 `[interpreters.py]` 兜底并注明仅状态栏 MCP 需要 Python）。
 
+- `v2.2.0`（2026-10-29）：
+  - **`AGENTS.md` 三节新规范入库（本机领先版本回推）**：本机 2026-10-28 完成的规范整编未回推云端，本次以本机为准入库（21745 → 26760 字节 / 168 行）。新增 `### 社区健康文件规范`（CONTRIBUTING / SECURITY 触发条件、`.github/` 内聚）、`### 项目级 AGENTS.md 规范`（项目级 agents.md 分层）、`### ARCHITECTURE.md 规范`（超 1 万行项目必维护，五要素 + 半年复审）；并按四分区（环境硬约束 / 行为与验收规范 / 仓库工程规范 / 专用环境附录）重排全文加编号。**逐行反向核对确认：仓库版无任何一条有效规则被本机版丢失**，仓库侧那些"独有行"均为被改写升级的旧表述。
+  - **`humanizer` 升级 3.1.0**：新增 `CHANGELOG.md`、`.cursor-plugin/plugin.json`、`.github/ISSUE_TEMPLATE/` 三模板 + `validate.yml`；`SKILL.md` 补第 6 类痕迹「Wrong reader」；`validate-package.py` 增加对 CHANGELOG 与 cursor 插件的校验。经 `dot_` 前缀编码纳管，上游自带的 `.git` 刻意排除（跨机同步无意义且会冲突）。
+  - **`known_marketplaces.json` 解除纳管**：其 `pluginCount` / `lastUpdated` / `cacheTransactionId` 由 ZCode 刷新市场时自行改写，纳管只会产生周期性伪差异（本机 56/315 vs 快照 40/291）。已加入 `.chezmoiignore`，本机文件原地保留。
+  - **`ppt-master` 误删风险处置**：本机 62MB / 13149 文件的 `ppt-master`（12193 个 SVG 模板 + 131 个 `__pycache__/*.pyc`）从未入库，`exact_` 语义会在 apply 时删除它（`chezmoi status` 已显示 ` D`）。因体量不适合入库，改为 `.chezmoiignore` 显式排除。**这是 `exact_` 语义第 3 次绊人**（前两次为 v2.1.0 apk-reverse 前缀冲突、v2.1.3 的 static 技能漏并）。
+  - **验收脚本随之校准**：`tests/acceptance.sh` 技能文件数 191 → 196、托管目标 5 → 4、移除 `known_marketplaces.json` 的 verbatim 哈希比对并反向断言其「不得被部署」；`VERIFY.md` 同步数字与描述。
+  - **「双向同步」场景的第三个样本**：本次与前两次的区别是**差异全部来自本机、云端零改动**（`git log HEAD..origin/main` 为空），确认方向为「本机 → 云端回推」而非拉取；仍按「先 diff 判定实质差异 → 源文件覆盖 → apply 收敛 → 文档四件套」路径执行。
+
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
 按优先级：
@@ -96,9 +104,11 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
    - **本轮接管路径**（避开已知的代理坑）：先 `git clone <repo> ~/.local/share/chezmoi` 手动落源目录，再 `chezmoi init --promptDefaults --apply`——源目录已是 git 仓库时 chezmoi 跳过克隆，`--promptDefaults` 让两个 `promptStringOnce` 直接取默认值，全程免交互（否则 agent 会话里会卡在交互提示）。
    - 实际踩到的坑（已记入第 6 节）：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
    - **2026-10-12 二次复核（v2.1.3 发布时）**：接管本次确认生效——`chezmoi status` 空输出、`chezmoi apply` 幂等、`~/.zcode/AGENTS.md` 与 `cli/config.json` 对源逐字节一致。另实测当日代理链路抖动：git 经 `127.0.0.1:7900` 访问 GitHub 握手失败、直连正常，`git -c http.proxy=` 仍是最可靠绕行。
-4. **`exact_` 与 `npx skills add` 的摩擦（P2）**：目前靠 adopt 助手 + README 纪律兜底。若嫌麻烦，可去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留）。决策前建议先实测一两周的日常手感。
-5. ~~**MCP 版本升级流程（P2）**~~ **2026-10-26 部分解决（T3）**：验收漂移检查已升级为「名字 + 锁定版本」双向比对，`mcp-deps.yaml` ↔ 模板漏改任意一处即红且列出差异项。升级 MCP 仍需改 yaml + 模板两处，是否进一步收敛为 yaml 单源渲染见待办 8（T9）评估。
-6. **chezmoi 版本升级（P3）**：升到含 `chezmoi:modify-template` + `.chezmoi.stdin` 的版本后，可评估把 `config.json` 合并改回纯模板实现（省掉 Python 依赖）。届时需重跑验收。
+4. **`exact_` 与 `npx skills add` 的摩擦（P1）**：目前靠 adopt 助手 + README 纪律兜底。**v2.2.0 记入第 3 次同类事故**（`ppt-master` 因未纳管而面临 apply 删除，靠 `.chezmoiignore` 兜住）。反复出现的根因是「装技能」与「纳管」是两个动作、中间无强约束。可选方向：
+   - 短程：把 `tools/adopt-local-skills.sh` 的检查嵌进 `run_once` 或 pretool 钩子，装完必查；
+   - 长程：去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留），或用 `dot_zcode/skills/`（非 exact）承载「本机自装、可选同步」类技能——**`ppt-master` 已按后者思路用 ignore 隔离，可作为该方向的原型**。
+5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
+6. ~~**chezmoi 版本升级（P3）**~~ **已由 v2.4.0 实现（T8）**：`config.json` 合并已改由 chezmoi 原生 `modify-template`（`dot_zcode/cli/modify_config.json`）实现，部署不再依赖 Python；`.chezmoi.toml.tmpl` 的 `[interpreters.py]` 仅为 statusbar MCP 保留。
 7. **本批次（v2.2.0 / v2.3.0）的发布动作——需人工确认后才执行**：本地 `main` 已全部就绪且验收 PASS。确认后依次执行：
    - `git tag -a v2.2.0 -m "v2.2.0: MCP 条目显式传输类型、文档边界与版本级漂移检查"`
    - `git tag -a v2.3.0 -m "v2.3.0: 设置页开关继承、CLI 幂等插件安装与 adopt 链接实体化"`

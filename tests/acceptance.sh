@@ -91,7 +91,6 @@ step "T2.1 隔离全量部署"
 c apply --exclude=scripts
 [ -f "$DEST/.zcode/AGENTS.md" ] || fail "AGENTS.md 未部署"
 [ -f "$DEST/.zcode/commands/usage.md" ] || fail "commands/usage.md 未部署"
-[ -f "$DEST/.zcode/cli/plugins/known_marketplaces.json" ] || fail "known_marketplaces.json 未部署"
 [ -f "$DEST/.zcode/cli/plugins/installed_plugins.json" ] || fail "installed_plugins.json 未部署"
 [ -f "$DEST/.zcode/cli/config.json" ] || fail "config.json 未渲染"
 [ "$(find "$DEST/.zcode/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = "$SKILL_DIRS" ] || fail "skills 目录数与源侧不一致（期望 ${SKILL_DIRS}）"
@@ -102,7 +101,9 @@ step "T2.1b .chezmoiignore：仓库自有文件不得落到目标目录"
 for f in README.md CHANGELOG.md HANDOFF.md mcp-deps.yaml tests tools legacy .github PROBES.md VERIFY.md; do
   [ -e "$DEST/$f" ] && fail "仓库自有文件被部署到目标目录：$f"
 done
-ok "仓库自有文件全部被正确排除"
+# known_marketplaces.json 是 ZCode 运行时自写缓存，已改为不纳管，不得被部署
+[ -e "$DEST/.zcode/cli/plugins/known_marketplaces.json" ] && fail "known_marketplaces.json 不应被部署（运行时自写缓存）"
+ok "仓库自有文件全部被正确排除，运行时缓存未部署"
 
 # ---------- R2 verbatim 逐字节 ----------
 step "R2 verbatim 文件逐字节一致"
@@ -112,7 +113,6 @@ root, dest = sys.argv[1], sys.argv[2]
 pairs = [
     ("dot_zcode/AGENTS.md", ".zcode/AGENTS.md"),
     ("dot_zcode/commands/usage.md", ".zcode/commands/usage.md"),
-    ("dot_zcode/cli/plugins/known_marketplaces.json", ".zcode/cli/plugins/known_marketplaces.json"),
 ]
 bad = []
 for src, tgt in pairs:

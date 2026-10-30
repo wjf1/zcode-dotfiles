@@ -59,8 +59,7 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 │   ├── cli/
 │   │   ├── modify_config.json           # config.json 深合并源（chezmoi:modify-template，stdin → 合并 → stdout）
 │   │   └── plugins/
-│   │       ├── installed_plugins.json.tmpl   # installPath 按本机 homeDir 渲染
-│   │       └── known_marketplaces.json       # verbatim
+│   │       └── installed_plugins.json.tmpl   # installPath 按本机 homeDir 渲染
 │   └── exact_skills/                    # → ~/.zcode/skills/（40 个技能，exact_ 镜像语义）
 ├── run_once_after_10-install-mcp-deps.{sh,ps1}   # 每机一次：依赖检测 + 渲染产物自检
 ├── tests/acceptance.sh                  # R0–R5 验收（本地与 CI 共用）
@@ -74,7 +73,7 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 
 | 层 | 内容 | 存储 | 部署方式 |
 |---|---|---|---|
-| L1 平台无关 | `AGENTS.md`、`commands/usage.md`、`known_marketplaces.json`、40 个 skills | verbatim | 直接复制；skills 用 `exact_` 镜像 |
+| L1 平台无关 | `AGENTS.md`、`commands/usage.md`、40 个 skills | verbatim | 直接复制；skills 用 `exact_` 镜像 |
 | L2 路径相关 | `cli/config.json`、`cli/plugins/installed_plugins.json` | Go 模板 | 按 OS 与本机 homeDir 渲染 |
 | L3 机器依赖 | 5 个 MCP 的外部可执行文件 | `mcp-deps.yaml` | `run_once` 检测 + 指引 |
 | L4 凭证与缓存 | OAuth token、API 密钥、会话、日志、插件缓存 | **刻意不同步** | 部署后手动登录 / 由 ZCode 自行下载 |
@@ -95,7 +94,7 @@ chezmoi apply         # 仅应用本地 source 状态
 
 | 目标文件 | 回写方式 |
 |---|---|
-| `~/.zcode/AGENTS.md`、`commands/usage.md`、`cli/plugins/known_marketplaces.json` | `chezmoi add <目标路径>`（verbatim，直接收录本机内容） |
+| `~/.zcode/AGENTS.md`、`commands/usage.md` | `chezmoi add <目标路径>`（verbatim，直接收录本机内容） |
 | `~/.zcode/skills/<新技能>` | 先跑 `tools/adopt-local-skills.sh --add`（见下节） |
 | `~/.zcode/cli/config.json` | **禁止 `chezmoi add`**。用 `chezmoi edit ~/.zcode/cli/config.json` 打开模板源改，或直接编辑 `dot_zcode/cli/modify_config.json` |
 | `~/.zcode/cli/plugins/installed_plugins.json` | **禁止 `chezmoi add`**。同上，改 `dot_zcode/cli/plugins/installed_plugins.json.tmpl` |
@@ -206,7 +205,7 @@ The repository root *is* the chezmoi source state: `dot_zcode/` maps to `~/.zcod
 
 | Layer | Content | Storage | Deployment |
 |---|---|---|---|
-| L1 platform-agnostic | `AGENTS.md`, `commands/usage.md`, `known_marketplaces.json`, 40 skills | verbatim | plain copy; skills use `exact_` |
+| L1 platform-agnostic | `AGENTS.md`, `commands/usage.md`, 40 skills | verbatim | plain copy; skills use `exact_` |
 | L2 path-dependent | `cli/config.json`, `cli/plugins/installed_plugins.json` | Go template | rendered per OS and per `homeDir` |
 | L3 machine deps | the 5 MCP executables | `mcp-deps.yaml` | detected by `run_once`, with guidance |
 | L4 credentials & cache | OAuth tokens, API keys, sessions, logs, plugin cache | **not synced** | sign in again / let ZCode re-download |
@@ -225,7 +224,7 @@ chezmoi apply         # apply the local source state only
 
 | Target file | How to write changes back |
 |---|---|
-| `~/.zcode/AGENTS.md`, `commands/usage.md`, `cli/plugins/known_marketplaces.json` | `chezmoi add <target>` (verbatim files) |
+| `~/.zcode/AGENTS.md`, `commands/usage.md` | `chezmoi add <target>` (verbatim files) |
 | `~/.zcode/skills/<new skill>` | run `tools/adopt-local-skills.sh --add` first (next section) |
 | `~/.zcode/cli/config.json` | **never `chezmoi add`** — edit the template via `chezmoi edit ~/.zcode/cli/config.json` or directly edit `dot_zcode/cli/modify_config.json` |
 | `~/.zcode/cli/plugins/installed_plugins.json` | **never `chezmoi add`** — edit `dot_zcode/cli/plugins/installed_plugins.json.tmpl` |
