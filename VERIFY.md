@@ -175,3 +175,9 @@ R1（自定义 server 保留）、R1b（enabled 继承）、R4（幂等）等核
 
 1. **真机灰度**：主力机 `chezmoi apply` 一轮，确认真实 `~/.zcode/cli/config.json` 与语义预期一致；损坏文件场景的人工恢复路径（修复或删除后 apply）未在真机演练。
 2. **chezmoi 升级兼容**：modify-template 依赖的行为在更高版本 chezmoi 上的兼容性未测（当前基线 v2.73.0）。
+
+## 2026-10-31 skills-audit 守卫批次（Unreleased）
+
+- `sh tests/acceptance.sh` 全量退出码 **0**（含新增步骤：skills-audit .sh 语法检查、三态夹具 sh / PowerShell 双通道断言、跨平台真实 apply 的 `[skills-audit]` 执行断言）。
+- 三态夹具人工复跑（mktemp 沙箱）：sh 与 ps1 输出一致——仅 `UNMANAGED: unmanaged-skill` + `WARNING 1`，managed-skill 与 ignored-skill 均未误报。
+- 本机真实场景：`run_before_00-skills-audit.ps1` 对真实 `~/.zcode/skills/` 输出 `OK all skills managed (40 managed; .chezmoiignore excludes honored)`——40 个纳管技能与 ppt-master ignore 排除项零误报。

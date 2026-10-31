@@ -443,6 +443,29 @@ else
   ok ".sh 渲染自检能检出缺失命令"
 fi
 
+# ---------- skills-audit 守卫：语法 + 三态夹具（已纳管/ignore/未纳管）----------
+step "skills-audit 守卫：语法与三态夹具"
+sh -n "$ROOT/run_before_00-skills-audit.sh" || fail "skills-audit .sh 语法错误"
+AUDIT_HOME="$WORK/audit-home"
+AUDIT_SRC="$WORK/audit-src"
+mkdir -p "$AUDIT_HOME/.zcode/skills/managed-skill" "$AUDIT_HOME/.zcode/skills/ignored-skill" "$AUDIT_HOME/.zcode/skills/unmanaged-skill"
+mkdir -p "$AUDIT_SRC/dot_zcode/exact_skills/managed-skill"
+printf '.zcode/skills/ignored-skill\n' > "$AUDIT_SRC/.chezmoiignore"
+out_a=$(HOME="$AUDIT_HOME" ZCODE_SKIP_OS_GUARD=1 CHEZMOI_SOURCE_DIR="$AUDIT_SRC" sh "$ROOT/run_before_00-skills-audit.sh" 2>&1 || true)
+echo "$out_a" | grep -q 'UNMANAGED: unmanaged-skill' || fail "skills-audit .sh 未报未纳管：$out_a"
+echo "$out_a" | grep -q 'WARNING 1' || fail "skills-audit .sh 计数不对：$out_a"
+echo "$out_a" | grep -q 'UNMANAGED: managed-skill' && fail "skills-audit .sh 把已纳管项报成未纳管：$out_a"
+echo "$out_a" | grep -q 'ignored-skill' && fail "skills-audit .sh 把 ignore 项报成未纳管：$out_a"
+ok "skills-audit .sh 三态判定正确"
+if [ "$IS_WINDOWS" = 1 ]; then
+  out_b=$(USERPROFILE="$AUDIT_HOME" CHEZMOI_SOURCE_DIR="$AUDIT_SRC" powershell -NoProfile -ExecutionPolicy Bypass -File "$ROOT/run_before_00-skills-audit.ps1" 2>&1 || true)
+  echo "$out_b" | grep -q 'UNMANAGED: unmanaged-skill' || fail "skills-audit .ps1 未报未纳管：$out_b"
+  echo "$out_b" | grep -q 'WARNING 1' || fail "skills-audit .ps1 计数不对：$out_b"
+  echo "$out_b" | grep -q 'UNMANAGED: managed-skill' && fail "skills-audit .ps1 把已纳管项报成未纳管：$out_b"
+  echo "$out_b" | grep -q 'ignored-skill' && fail "skills-audit .ps1 把 ignore 项报成未纳管：$out_b"
+  ok "skills-audit .ps1 三态判定正确"
+fi
+
 # ---------- run_once 的跨平台调度（真实 apply，验证 .chezmoiignore + 脚本执行）----------
 step "run_once 跨平台调度：只执行本平台脚本"
 DEST2="$WORK/dest-scripts"
@@ -452,6 +475,7 @@ DEST2_W=$(winpath "$DEST2")
 # 验收沙箱绝不真实安装插件（只断言平台标记与 SKIP）。
 out=$(ZCODE_TEST_NO_SIDE_EFFECTS=1 chezmoi -c "$CFG_W" -S "$ROOT_W" -D "$DEST2_W" --persistent-state "$(winpath "$WORK/state2.boltdb")" --no-tty --force apply 2>&1 || true)
 echo "$out" | sed 's/^/   /'
+echo "$out" | grep -q '\[skills-audit\]' || fail "真实 apply 时未执行 skills-audit 守卫脚本"
 # 断言用 ASCII 平台标记（PowerShell 5.1 的输出走系统代码页，中文匹配不可靠）
 if [ "$IS_WINDOWS" = 1 ]; then
   echo "$out" | grep -q 'platform=windows' || fail "Windows 上未执行 run_once .ps1"

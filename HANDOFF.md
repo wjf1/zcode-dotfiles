@@ -93,6 +93,12 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **验收脚本随之校准**：`tests/acceptance.sh` 技能文件数 191 → 196、托管目标 5 → 4、移除 `known_marketplaces.json` 的 verbatim 哈希比对并反向断言其「不得被部署」；`VERIFY.md` 同步数字与描述。
   - **「双向同步」场景的第三个样本**：本次与前两次的区别是**差异全部来自本机、云端零改动**（`git log HEAD..origin/main` 为空），确认方向为「本机 → 云端回推」而非拉取；仍按「先 diff 判定实质差异 → 源文件覆盖 → apply 收敛 → 文档四件套」路径执行。
 
+- `Unreleased`（2026-10-31，本次会话）：
+  - **待办 4 短程方案落地：apply 前技能纳管审计守卫**。新增 `run_before_00-skills-audit.{sh,ps1}`——每次 `chezmoi apply` 前只读扫描 `~/.zcode/skills/`，把未纳管且未被 `.chezmoiignore` 字面量排除的技能打 `UNMANAGED`/`WARNING`（ASCII 标记）+ 处置命令；只读、永不阻塞 apply。source 目录用 `CHEZMOI_SOURCE_DIR` 优先、`chezmoi source-path` 回退；`.chezmoiignore` 按 OS 双向排除对侧脚本（沿用「派生目标名」规则，见避坑 3）。选 `run_before_` 而非 `run_once_` 的理由：守卫必须覆盖「装完技能后隔了几天才 apply」的场景。
+  - **验收**：`tests/acceptance.sh` 新增「skills-audit 语法 + 三态夹具（已纳管/ignore/未纳管）」步骤与跨平台真实 apply 的 `[skills-audit]` 执行断言；Windows 本机全量验收退出码 0，三态夹具在 sh 与 PowerShell 5.1 双通道判定一致；真实技能目录实测 `OK all skills managed (40 managed)`，零误报（实录见 VERIFY.md）。
+  - **待办 5 关闭**：核对确认版本级双向漂移检查已随 v2.2.0 P2-2 落地（`mcp-deps.yaml` ↔ `dot_zcode/cli/modify_config.json`），README 不登记版本号、无需纳入；该条不再构成工作项。
+  - 文档同步：CHANGELOG `Unreleased`、README（文件树 + §6 adopt 纪律段补审计防线说明）、本文件待办 4/5 与本模块。
+
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
 按优先级：
@@ -105,9 +111,9 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
    - 实际踩到的坑（已记入第 6 节）：`chezmoi init` 的克隆会被系统代理坑住（改用手动 clone 到源目录）；`core.autocrlf=true` 使工作区为 CRLF，直接编辑源文件时须先做行尾归一化。
    - **2026-10-12 二次复核（v2.1.3 发布时）**：接管本次确认生效——`chezmoi status` 空输出、`chezmoi apply` 幂等、`~/.zcode/AGENTS.md` 与 `cli/config.json` 对源逐字节一致。另实测当日代理链路抖动：git 经 `127.0.0.1:7900` 访问 GitHub 握手失败、直连正常，`git -c http.proxy=` 仍是最可靠绕行。
 4. **`exact_` 与 `npx skills add` 的摩擦（P1）**：目前靠 adopt 助手 + README 纪律兜底。**v2.2.0 记入第 3 次同类事故**（`ppt-master` 因未纳管而面临 apply 删除，靠 `.chezmoiignore` 兜住）。反复出现的根因是「装技能」与「纳管」是两个动作、中间无强约束。可选方向：
-   - 短程：把 `tools/adopt-local-skills.sh` 的检查嵌进 `run_once` 或 pretool 钩子，装完必查；
+   - ~~短程：把 `tools/adopt-local-skills.sh` 的检查嵌进 `run_once` 或 pretool 钩子，装完必查~~ **已落地（2026-10-31）**：改为 `run_before_00-skills-audit.{sh,ps1}`——apply 前守卫比 run_once 更贴合删除时点（run_once 内容不变就不跑，守不住「装完技能后隔了几天才 apply」的场景）；只读警告、永不阻塞。长程方向（去 `exact_` / 非 exact 目录承载）保留，见下。
    - 长程：去掉 `exact_` 前缀（代价：仓库下线技能会在本机残留），或用 `dot_zcode/skills/`（非 exact）承载「本机自装、可选同步」类技能——**`ppt-master` 已按后者思路用 ignore 隔离，可作为该方向的原型**。
-5. **MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）。
+5. ~~**MCP 版本升级流程（P2）**：升级时需**同时**改 `modify_config.json.py.tmpl`、`mcp-deps.yaml`、README 三处（CI 漂移检查只校验名字一致性，不校验版本号一致性——可考虑把版本号也纳入漂移检查）~~ **已关闭（2026-10-31 核对）**：版本级双向漂移检查已随 v2.2.0 P2-2 落地（`mcp-deps.yaml` ↔ `dot_zcode/cli/modify_config.json`，升级漏改一处即红）；README 不登记版本号、无需纳入检查。当前升级实际只改两处，CI 兜底漂移。
 6. ~~**chezmoi 版本升级（P3）**~~ **已由 v2.4.0 实现（T8）**：`config.json` 合并已改由 chezmoi 原生 `modify-template`（`dot_zcode/cli/modify_config.json`）实现，部署不再依赖 Python；`.chezmoi.toml.tmpl` 的 `[interpreters.py]` 仅为 statusbar MCP 保留。
 7. ~~**本批次（v2.2.0 / v2.3.0）的发布动作**~~ **已完成（2026-10-30，用户确认后执行）**：三个 annotated tag（v2.2.0→8ebdd7e、v2.3.0→8b8ca6e、v2.4.0→04b998f 合流提交）已推送，三个 Release 标题与 tag subject 一致、正文取自 CHANGELOG 对应段落，Latest = v2.4.0。
 

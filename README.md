@@ -62,6 +62,7 @@ zcode-dotfiles/                          # 仓库根 = chezmoi source state
 │   │       └── installed_plugins.json.tmpl   # installPath 按本机 homeDir 渲染
 │   └── exact_skills/                    # → ~/.zcode/skills/（40 个技能，exact_ 镜像语义）
 ├── run_once_after_10-install-mcp-deps.{sh,ps1}   # 每机一次：依赖检测 + 渲染产物自检
+├── run_before_00-skills-audit.{sh,ps1}  # 每次 apply：技能纳管审计（exact_ 误删防线）
 ├── tests/acceptance.sh                  # R0–R5 验收（本地与 CI 共用）
 ├── tools/adopt-local-skills.{sh,ps1}    # 纳管本机未跟踪技能
 ├── tools/install-statusbar.{sh,ps1}     # 克隆 token 用量状态栏仓库
@@ -127,7 +128,7 @@ tools/adopt-local-skills.sh --add    # 逐个纳管到 dot_zcode/exact_skills/
 
 Windows 用 `powershell -ExecutionPolicy Bypass -File tools\adopt-local-skills.ps1 [-Add]`。
 
-**装完新技能请立刻 adopt**，否则下次 `chezmoi update` 会静默删掉它。若你不想承担这个纪律，可直接给 `dot_zcode/exact_skills` 去掉 `exact_` 前缀——代价是仓库里已下线的技能会在本机残留。
+**装完新技能请立刻 adopt**，否则下次 `chezmoi update` 会静默删掉它。作为最后防线，每次 `apply` 前会自动运行 `run_before_00-skills-audit.{sh,ps1}`（只读审计，永不阻塞 apply）：凡未纳管、且未被 `.chezmoiignore` 显式排除的技能，都会在删除发生前打出 `UNMANAGED`/`WARNING` 提示与处置命令。若你不想承担这个纪律，可直接给 `dot_zcode/exact_skills` 去掉 `exact_` 前缀——代价是仓库里已下线的技能会在本机残留。
 
 **ZCode 设置页技能导入**：ZCode 3.16 起，从设置页导入技能默认以软链（Windows 为 junction）写入 `~/.zcode/skills/`，同样受 `exact_` 语义管辖。导入后请立即 `tools/adopt-local-skills --add`：纳管时会自动把软链**实体化**为普通目录副本（与上游更新脱钩，上游更新不会自动跟随；需要更新时重新导入再纳管一次）。若希望持续跟随上游更新，仍建议用 `npx skills add` 安装（落盘即实体文件，无链接语义）+ 装完即 adopt；两种方式都要多一步 adopt 纪律，区别在于实体化副本不会随上游自动变化。
 
