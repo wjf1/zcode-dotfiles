@@ -98,6 +98,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **验收**：`tests/acceptance.sh` 新增「skills-audit 语法 + 三态夹具（已纳管/ignore/未纳管）」步骤与跨平台真实 apply 的 `[skills-audit]` 执行断言；Windows 本机全量验收退出码 0，三态夹具在 sh 与 PowerShell 5.1 双通道判定一致；真实技能目录实测 `OK all skills managed (40 managed)`，零误报（实录见 VERIFY.md）。
   - **待办 5 关闭**：核对确认版本级双向漂移检查已随 v2.2.0 P2-2 落地（`mcp-deps.yaml` ↔ `dot_zcode/cli/modify_config.json`），README 不登记版本号、无需纳入；该条不再构成工作项。
   - 文档同步：CHANGELOG `Unreleased`、README（文件树 + §6 adopt 纪律段补审计防线说明）、本文件待办 4/5 与本模块。
+  - **同日补充：纳管 `enhance` 兜底技能与命令**（zcode-prompt-enhance P4 交付物入库 `exact_` 体系，避免 apply 误删）；本机 apply 实测 audit 零误报后随批次入库。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 

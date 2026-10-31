@@ -7,6 +7,7 @@
 ### 新增
 
 - **apply 前技能纳管审计守卫（`exact_` 误删防线，HANDOFF 待办 4 短程方案）**：新增 `run_before_00-skills-audit.{sh,ps1}`，每次 `chezmoi apply` 前自动扫描 `~/.zcode/skills/`，把「未纳管且未被 `.chezmoiignore` 排除」的技能以 `UNMANAGED`/`WARNING`（ASCII 标记）列出并给出处置命令；只读、永不阻塞 apply。`.chezmoiignore` 按既有模式双向排除对侧脚本；`tests/acceptance.sh` 新增三态夹具（已纳管 / ignore / 未纳管）与真实 apply 执行断言。待办 5（版本号纳入漂移检查）经核对已由 v2.2.0 的 P2-2 覆盖（`mcp-deps.yaml` ↔ 模板版本级双向校验，README 不登记版本号），本次在 HANDOFF 中关闭该条。
+- **纳管 `enhance` 兜底技能与命令**（来自 zcode-prompt-enhance 的 P4 交付物）：`dot_zcode/commands/enhance.md` + `dot_zcode/exact_skills/enhance/SKILL.md`，避免 `exact_` 语义误删。SKILL 正文引用本机部署路径 `F:\AI\Zcode\zcode-prompt-enhance`（单机部署语义；换机需同步调整）。
 
 ## v2.4.0 — 2026-10-26
 
