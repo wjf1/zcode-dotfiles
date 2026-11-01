@@ -5,7 +5,7 @@
 ## 1. 项目概况与当前状态
 
 - **定位**：ZCode 桌面版（AI 编码工具）的跨机器配置同步仓库，chezmoi 管理，三平台单命令部署。
-- **当前版本**：`main` 已包含 **v2.2.0（T1–T3 + 2026-10-29 云端回追）、v2.3.0（T4–T7 + T10）与 v2.4.0（T8）** 全部内容；2026-10-31 已与云端分叉线（1194dc8 本机配置回推：AGENTS 三节 / humanizer 3.1.0 / 缓存解纳管 / ppt-master 防误删 / LICENSE）merge 合流，云端独有内容全部吸收，本地结构化工作全保留。**已于 2026-10-30 发布**：v2.2.0 / v2.3.0 / v2.4.0 三个 annotated tag + GitHub Release（v2.4.0 指向合流提交 04b998f，Latest）
+- **当前版本**：`main` 已包含 **v2.2.0 / v2.3.0 / v2.4.0（2026-10-30 发布，v2.4.0 为 Latest）** 与 **v2.5.0 内容（2026-11-01：apply 前技能纳管审计守卫 + enhance 兜底技能纳管，`eb22e7c` / `16e9a7d`）**；v2.5.0 的 CHANGELOG 段落与发布材料已备齐，**tag 与 GitHub Release 待用户确认后执行**。
 - **部署地址**：https://github.com/wjf1/zcode-dotfiles（默认分支 `main`）
 - **同步范围**：`~/.zcode` 中的默认指令、40 个技能、`commands/usage.md`、`cli/config.json`（MCP + 插件开关）、插件市场与插件来源记录。
 - **不做的事**：不同步凭证与缓存（L4）；不 vendor 上游独立项目；不保留旧 PowerShell 脚本可执行性。

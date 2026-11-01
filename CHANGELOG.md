@@ -2,7 +2,7 @@
 
 本仓库遵循语义化版本；每次发布在 `main` 上打 annotated tag，并同步 GitHub Release。
 
-## Unreleased
+## v2.5.0 — 2026-11-01
 
 ### 新增
 
