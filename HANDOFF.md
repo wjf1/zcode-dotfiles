@@ -99,6 +99,7 @@ zcode-dotfiles/                       # 仓库根 = chezmoi source state（SSOT�
   - **待办 5 关闭**：核对确认版本级双向漂移检查已随 v2.2.0 P2-2 落地（`mcp-deps.yaml` ↔ `dot_zcode/cli/modify_config.json`），README 不登记版本号、无需纳入；该条不再构成工作项。
   - 文档同步：CHANGELOG `Unreleased`、README（文件树 + §6 adopt 纪律段补审计防线说明）、本文件待办 4/5 与本模块。
   - **同日补充：纳管 `enhance` 兜底技能与命令**（zcode-prompt-enhance P4 交付物入库 `exact_` 体系，避免 apply 误删）；本机 apply 实测 audit 零误报后随批次入库。
+  - **2026-11-08（未发版）**：新增根目录 `ARCHITECTURE.md`（matklad 五要素：鸟瞰 / codemap / 架构不变量与刻意不做 / 层与系统边界 / 横切关注点，119 行），履行「代码超 1 万行必维护架构文档」规范；同批将本机 main 快进同步至远端 v2.5.0 定版提交（`b11a6e0`）。
 
 ## 5. 接力开发指引与待办（Next Steps / Backlog）
 
