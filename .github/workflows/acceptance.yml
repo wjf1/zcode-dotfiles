@@ -22,7 +22,7 @@ jobs:
       - name: 安装 chezmoi
         run: |
           mkdir -p "$HOME/.local/bin"
-          sh -c "$(curl -fsLS https://get.chezmoi.io)" -- -b "$HOME/.local/bin"
+          sh -c "$(curl -fsLS --retry 3 --retry-delay 2 --max-time 60 https://get.chezmoi.io)" -- -b "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: 显示工具版本
@@ -43,10 +43,10 @@ jobs:
         run: |
           if ! command -v gitleaks >/dev/null 2>&1; then
             # 资源名随版本变化（8.x 用 linux_x64），故从 release API 动态解析，避免写死失效
-            url=$(curl -fsSL https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
+            url=$(curl -fsSL --retry 3 --retry-delay 2 --max-time 60 https://api.github.com/repos/gitleaks/gitleaks/releases/latest \
                   | grep -o 'https://[^"]*linux_x64\.tar\.gz' | head -1)
             echo "gitleaks asset: $url"
-            curl -fsSL -o /tmp/gitleaks.tar.gz "$url"
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 60 -o /tmp/gitleaks.tar.gz "$url"
             tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
             sudo install /tmp/gitleaks /usr/local/bin/gitleaks
           fi
